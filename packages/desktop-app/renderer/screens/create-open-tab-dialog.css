@@ -1,0 +1,100 @@
+.create-open-tab-dialog__overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.create-open-tab-dialog {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-large);
+  box-shadow: var(--shadow-card);
+  padding: var(--spacing-6);
+  width: 360px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
+}
+
+.create-open-tab-dialog__title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.create-open-tab-dialog__input {
+  background: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-small);
+  color: var(--color-text-primary);
+  font-family: var(--font-family-base);
+  padding: 10px 14px;
+  text-align: right;
+}
+
+.create-open-tab-dialog__input:focus {
+  outline: none;
+  border-color: var(--color-accent-brass);
+}
+
+.create-open-tab-dialog__warning {
+  color: var(--color-accent-brass-strong);
+  font-size: 14px;
+  line-height: 1.8;
+}
+
+.create-open-tab-dialog__similar-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+}
+
+.create-open-tab-dialog__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-3);
+}
+
+.create-open-tab-dialog__actions button {
+  background: var(--color-background);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-small);
+  color: var(--color-text-primary);
+  font-family: var(--font-family-base);
+  padding: 8px 16px;
+  cursor: pointer;
+}
+
+.create-open-tab-dialog__primary {
+  background: var(--color-accent-felt) !important;
+  border-color: var(--color-accent-felt-strong) !important;
+  font-weight: 600;
+}
+
+.create-open-tab-dialog__controller-options {
+  display: flex;
+  gap: var(--spacing-3);
+}
+
+.create-open-tab-dialog__controller-option {
+  flex: 1;
+  background: var(--color-background);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-small);
+  color: var(--color-text-primary);
+  font-family: var(--font-family-base);
+  padding: 10px 0;
+  cursor: pointer;
+}
+
+.create-open-tab-dialog__controller-option--selected {
+  background: var(--color-accent-felt);
+  border-color: var(--color-accent-felt-strong);
+  font-weight: 600;
+}

@@ -1,0 +1,32 @@
+.premium-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-large);
+  box-shadow: var(--shadow-card), var(--shadow-brass-edge);
+  padding: var(--spacing-5);
+  text-align: right;
+  color: var(--color-text-primary);
+  font-family: var(--font-family-base);
+  cursor: default;
+  transition: transform var(--transition-soft), box-shadow var(--transition-soft),
+    border-color var(--transition-soft);
+}
+
+button.premium-card {
+  cursor: pointer;
+  width: 100%;
+}
+
+button.premium-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-card-hover), var(--shadow-brass-edge);
+  border-color: var(--color-border-strong);
+}
+
+button.premium-card:active {
+  transform: translateY(0);
+}
+
+.premium-card--elevated {
+  background: var(--color-background-elevated);
+}

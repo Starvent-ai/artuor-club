@@ -1,0 +1,20 @@
+{
+  "name": "@arthurclub/database",
+  "version": "0.1.0",
+  "private": true,
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "node --experimental-sqlite --import tsx --test src/__tests__/*.test.ts"
+  },
+  "dependencies": {
+    "better-sqlite3": "11.5.0"
+  },
+  "devDependencies": {
+    "typescript": "5.6.3",
+    "tsx": "4.19.2",
+    "@types/node": "22.7.5",
+    "@types/better-sqlite3": "7.6.11"
+  }
+}

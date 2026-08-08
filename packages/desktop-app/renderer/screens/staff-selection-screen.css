@@ -1,0 +1,27 @@
+.staff-selection-screen {
+  min-height: 100vh;
+  padding: var(--spacing-7);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-6);
+}
+
+.staff-selection-screen__title {
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.staff-selection-screen__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: var(--spacing-4);
+  width: 100%;
+  max-width: 720px;
+}
+
+.staff-selection-screen__name {
+  font-size: 16px;
+  font-weight: 500;
+}

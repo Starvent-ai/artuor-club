@@ -1,0 +1,35 @@
+.transactions-screen__filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-3);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-large);
+  padding: var(--spacing-4);
+}
+
+.transactions-screen__filter-input {
+  background: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-small);
+  color: var(--color-text-primary);
+  font-family: var(--font-family-base);
+  padding: 8px 12px;
+  font-size: 13px;
+}
+
+.transactions-screen__filter-input:focus {
+  outline: none;
+  border-color: var(--color-accent-brass);
+}
+
+.transactions-screen__search-button {
+  background: var(--color-accent-felt);
+  border: 1px solid var(--color-accent-felt-strong);
+  border-radius: var(--radius-small);
+  color: var(--color-text-primary);
+  font-family: var(--font-family-base);
+  font-weight: 600;
+  padding: 8px 20px;
+  cursor: pointer;
+}

@@ -1,0 +1,42 @@
+.unit-status-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3);
+}
+
+.unit-status-card__image {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: var(--radius-medium);
+  background: var(--color-background);
+}
+
+.unit-status-card__info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.unit-status-card__name {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.unit-status-card__badge {
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-weight: 500;
+}
+
+.unit-status-card__badge--free {
+  background: rgba(47, 158, 99, 0.15);
+  color: var(--color-success);
+}
+
+.unit-status-card__badge--in-use {
+  background: rgba(201, 162, 39, 0.15);
+  color: var(--color-accent-brass-strong);
+}

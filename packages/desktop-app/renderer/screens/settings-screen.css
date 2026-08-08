@@ -1,0 +1,134 @@
+.settings-screen {
+  min-height: 100vh;
+  background: var(--color-background);
+  padding-bottom: var(--spacing-7);
+}
+
+.settings-screen__header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-4);
+  padding: var(--spacing-5) var(--spacing-7);
+  background: var(--color-background-elevated);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.settings-screen__back-button {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-small);
+  color: var(--color-text-primary);
+  font-family: var(--font-family-base);
+  padding: 10px 18px;
+  cursor: pointer;
+  transition: border-color var(--transition-soft);
+}
+
+.settings-screen__title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.settings-screen__content {
+  padding: var(--spacing-6) var(--spacing-7);
+  max-width: 560px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-5);
+}
+
+.settings-screen__section {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-large);
+  box-shadow: var(--shadow-card);
+  padding: var(--spacing-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
+}
+
+.settings-screen__section-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.settings-screen__input {
+  background: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-small);
+  color: var(--color-text-primary);
+  font-family: var(--font-family-base);
+  padding: 10px 14px;
+  text-align: right;
+}
+
+.settings-screen__input:focus {
+  outline: none;
+  border-color: var(--color-accent-brass);
+}
+
+.settings-screen__error {
+  color: var(--color-accent-brass-strong);
+  font-size: 13px;
+}
+
+.settings-screen__success {
+  color: var(--color-text-secondary);
+  font-size: 13px;
+}
+
+.settings-screen__save-button {
+  background: var(--color-accent-felt);
+  border: 1px solid var(--color-accent-felt-strong);
+  border-radius: var(--radius-small);
+  color: var(--color-text-primary);
+  font-family: var(--font-family-base);
+  font-weight: 600;
+  padding: 10px 18px;
+  cursor: pointer;
+}
+
+.settings-screen__backup-actions {
+  display: flex;
+  gap: var(--spacing-3);
+}
+
+.settings-screen__restore-button {
+  background: var(--color-background);
+  border: 1px solid var(--color-accent-brass-strong);
+  border-radius: var(--radius-small);
+  color: var(--color-accent-brass-strong);
+  font-family: var(--font-family-base);
+  font-weight: 600;
+  padding: 10px 18px;
+  cursor: pointer;
+}
+
+.settings-screen__backup-history {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+}
+
+.settings-screen__backup-row {
+  display: grid;
+  grid-template-columns: 80px 80px 1fr;
+  gap: var(--spacing-3);
+  padding: var(--spacing-2) 0;
+  border-bottom: 1px solid var(--color-border);
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  direction: ltr;
+  text-align: right;
+}
+
+.settings-screen__backup-empty {
+  color: var(--color-text-muted);
+  font-size: 13px;
+}
