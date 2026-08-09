@@ -10,6 +10,7 @@ import { registerReportHandlers } from "./ipc/reportHandlers";
 import { registerBackupHandlers } from "./ipc/backupHandlers";
 import { registerPsHandlers } from "./ipc/psHandlers";
 import { registerTransactionHandlers } from "./ipc/transactionHandlers";
+import { registerLedgerHandlers } from "./ipc/ledgerHandlers";
 
 let mainWindow: BrowserWindow | null = null;
 
@@ -18,7 +19,7 @@ function createMainWindow(): BrowserWindow {
     width: 1440,
     height: 900,
     show: false,
-    backgroundColor: "#0e1210",
+    backgroundColor: "#0a0a0d",
     icon: join(__dirname, "..", "..", "..", "assets", "icon.png"),
     webPreferences: {
       preload: join(__dirname, "..", "preload", "index.js"),
@@ -46,6 +47,7 @@ app.whenReady().then(() => {
   registerBackupHandlers(ipcMain, connection, databaseFilePath);
   registerPsHandlers(ipcMain, connection);
   registerTransactionHandlers(ipcMain, connection);
+  registerLedgerHandlers(ipcMain, connection);
   mainWindow = createMainWindow();
 });
 

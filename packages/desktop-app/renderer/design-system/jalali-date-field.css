@@ -1,0 +1,40 @@
+.jalali-date-field {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-1);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-medium);
+  padding: var(--spacing-2) var(--spacing-3);
+  transition: border-color var(--transition-soft);
+}
+
+.jalali-date-field:focus-within {
+  border-color: var(--color-accent);
+}
+
+.jalali-date-field__day,
+.jalali-date-field__month,
+.jalali-date-field__year {
+  background: transparent;
+  border: none;
+  color: var(--color-text-primary);
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-body);
+  text-align: center;
+  width: 26px;
+}
+
+.jalali-date-field__year {
+  width: 40px;
+}
+
+.jalali-date-field__day:focus,
+.jalali-date-field__month:focus,
+.jalali-date-field__year:focus {
+  outline: none;
+}
+
+.jalali-date-field__separator {
+  color: var(--color-text-muted);
+}

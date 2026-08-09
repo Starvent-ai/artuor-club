@@ -8,8 +8,11 @@ import { ForgotPasswordDialog } from "./screens/ForgotPasswordDialog";
 import { SettingsScreen } from "./screens/SettingsScreen";
 import { ReportsScreen } from "./screens/ReportsScreen";
 import { TransactionsScreen } from "./screens/TransactionsScreen";
+import { LedgerScreen } from "./screens/LedgerScreen";
 import { StartPsSessionDialog } from "./screens/StartPsSessionDialog";
 import { ManagePsSessionDialog } from "./screens/ManagePsSessionDialog";
+import { StartTableSessionDialog } from "./screens/StartTableSessionDialog";
+import { ManageTableSessionDialog } from "./screens/ManageTableSessionDialog";
 import { PaymentMethodDialog } from "./screens/PaymentMethodDialog";
 
 type AppPhase =
@@ -19,7 +22,8 @@ type AppPhase =
   | "open_tabs"
   | "settings"
   | "reports"
-  | "transactions";
+  | "transactions"
+  | "ledger";
 
 interface StaffOption {
   id: string;
@@ -39,6 +43,7 @@ export function App({ entryScreen, staffOptions, onStaffSelected }: AppProps) {
   const [isPasswordPromptOpen, setIsPasswordPromptOpen] = useState(false);
   const [isForgotPasswordOpen, setIsForgotPasswordOpen] = useState(false);
   const [selectedDeviceId, setSelectedDeviceId] = useState<string | null>(null);
+  const [selectedTableId, setSelectedTableId] = useState<string | null>(null);
   const [tableIdPendingPayment, setTableIdPendingPayment] = useState<string | null>(null);
   const [isEndingTableSession, setIsEndingTableSession] = useState(false);
 
@@ -88,6 +93,10 @@ export function App({ entryScreen, staffOptions, onStaffSelected }: AppProps) {
     return <TransactionsScreen onClose={() => setPhase("main_application")} />;
   }
 
+  if (phase === "ledger") {
+    return <LedgerScreen onClose={() => setPhase("main_application")} />;
+  }
+
   async function openSettings() {
     const status = await window.arthurClub.getSecurityStatus();
     if (status.isPasswordSet) {
@@ -98,17 +107,10 @@ export function App({ entryScreen, staffOptions, onStaffSelected }: AppProps) {
   }
 
   const selectedDevice = devices.find((device) => device.id === selectedDeviceId) ?? null;
+  const selectedTable = tables.find((table) => table.id === selectedTableId) ?? null;
 
   function handleTableClick(tableId: string) {
-    const table = tables.find((item) => item.id === tableId);
-    if (!table) {
-      return;
-    }
-    if (table.status === "free") {
-      window.arthurClub.toggleTableSession(tableId).then(refreshHomeScreenData);
-      return;
-    }
-    setTableIdPendingPayment(tableId);
+    setSelectedTableId(tableId);
   }
 
   async function endTableSessionWithPayment(paymentMethod: "cash" | "pos" | "card_to_card") {
@@ -139,6 +141,7 @@ export function App({ entryScreen, staffOptions, onStaffSelected }: AppProps) {
         onSettingsClick={openSettings}
         onReportsClick={() => setPhase("reports")}
         onTransactionsClick={() => setPhase("transactions")}
+        onLedgerClick={() => setPhase("ledger")}
       />
 
       {tableIdPendingPayment && (
@@ -147,6 +150,29 @@ export function App({ entryScreen, staffOptions, onStaffSelected }: AppProps) {
           isBusy={isEndingTableSession}
           onSelect={endTableSessionWithPayment}
           onCancel={() => setTableIdPendingPayment(null)}
+        />
+      )}
+
+      {selectedTable && selectedTable.status === "free" && (
+        <StartTableSessionDialog
+          tableId={selectedTable.id}
+          tableName={selectedTable.name}
+          onStarted={() => {
+            setSelectedTableId(null);
+            refreshHomeScreenData();
+          }}
+          onCancel={() => setSelectedTableId(null)}
+        />
+      )}
+
+      {selectedTable && selectedTable.status === "in_use" && (
+        <ManageTableSessionDialog
+          tableName={selectedTable.name}
+          onEnd={() => {
+            setSelectedTableId(null);
+            setTableIdPendingPayment(selectedTable.id);
+          }}
+          onCancel={() => setSelectedTableId(null)}
         />
       )}
 

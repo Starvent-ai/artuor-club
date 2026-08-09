@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import "./settings-screen.css";
 import type { BackupHistoryEntryDto } from "../../preload/index";
+import { formatJalaliDateTimeLabel } from "../utils/formatJalaliDateTime";
 
 interface SettingsScreenProps {
   onClose: () => void;
@@ -192,6 +193,7 @@ export function SettingsScreen({ onClose }: SettingsScreenProps) {
               <div key={entry.id} className="settings-screen__backup-row">
                 <span>{entry.type === "manual" ? "دستی" : "خودکار"}</span>
                 <span>{entry.status === "success" ? "موفق" : "ناموفق"}</span>
+                <span>{formatJalaliDateTimeLabel(entry.createdAt)}</span>
                 <span>{entry.filePath}</span>
               </div>
             ))}

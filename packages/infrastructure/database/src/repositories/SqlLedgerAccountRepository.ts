@@ -2,6 +2,7 @@ import type { DatabaseConnection } from "../../../../core/src/domain/ports/Datab
 import type {
   LedgerAccountRecord,
   LedgerAccountRepository,
+  LedgerAccountSummary,
 } from "../../../../core/src/domain/ports/LedgerAccountRepository";
 
 interface LedgerAccountRow {
@@ -78,5 +79,55 @@ export class SqlLedgerAccountRepository implements LedgerAccountRepository {
       [customerId]
     );
     return rows.map(toRecord);
+  }
+
+  listOpenSummaries(customerNamePrefix?: string): LedgerAccountSummary[] {
+    interface SummaryRow {
+      ledger_account_id: string;
+      customer_id: string;
+      customer_full_name: string;
+      total_amount: number;
+      paid_amount: number;
+      opened_at: string;
+    }
+
+    if (customerNamePrefix && customerNamePrefix.trim().length > 0) {
+      const rows = this.connection.queryAll<SummaryRow>(
+        `SELECT ledger_account.id as ledger_account_id, customer.id as customer_id,
+                customer.full_name as customer_full_name,
+                ledger_account.total_amount, ledger_account.paid_amount, ledger_account.opened_at
+         FROM ledger_account
+         JOIN customer ON customer.id = ledger_account.customer_id
+         WHERE ledger_account.status = 'open' AND customer.full_name LIKE ?
+         ORDER BY ledger_account.opened_at DESC`,
+        [`${customerNamePrefix}%`]
+      );
+      return rows.map((row) => ({
+        ledgerAccountId: row.ledger_account_id,
+        customerId: row.customer_id,
+        customerFullName: row.customer_full_name,
+        totalAmount: row.total_amount,
+        paidAmount: row.paid_amount,
+        openedAt: row.opened_at,
+      }));
+    }
+
+    const rows = this.connection.queryAll<SummaryRow>(
+      `SELECT ledger_account.id as ledger_account_id, customer.id as customer_id,
+              customer.full_name as customer_full_name,
+              ledger_account.total_amount, ledger_account.paid_amount, ledger_account.opened_at
+       FROM ledger_account
+       JOIN customer ON customer.id = ledger_account.customer_id
+       WHERE ledger_account.status = 'open'
+       ORDER BY ledger_account.opened_at DESC`
+    );
+    return rows.map((row) => ({
+      ledgerAccountId: row.ledger_account_id,
+      customerId: row.customer_id,
+      customerFullName: row.customer_full_name,
+      totalAmount: row.total_amount,
+      paidAmount: row.paid_amount,
+      openedAt: row.opened_at,
+    }));
   }
 }

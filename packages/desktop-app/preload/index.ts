@@ -14,6 +14,15 @@ export interface OpenTabSummaryDto {
   openedAt: string;
 }
 
+export interface LedgerAccountSummaryDto {
+  ledgerAccountId: string;
+  customerId: string;
+  customerFullName: string;
+  totalAmount: number;
+  paidAmount: number;
+  openedAt: string;
+}
+
 export type CreateOpenTabResultDto =
   | { status: "needs_confirmation"; similarCustomers: { id: string; fullName: string }[] }
   | { status: "created"; openTabId: string; customerId: string };
@@ -133,6 +142,13 @@ contextBridge.exposeInMainWorld("arthurClub", {
     openTabId: string;
     method: "cash" | "pos" | "card_to_card" | "ledger";
   }): Promise<void> => ipcRenderer.invoke("openTab:settle", input),
+  listLedgerAccounts: (namePrefix?: string): Promise<LedgerAccountSummaryDto[]> =>
+    ipcRenderer.invoke("ledger:list", namePrefix),
+  recordLedgerPayment: (input: {
+    ledgerAccountId: string;
+    amount: number;
+    method: "cash" | "pos" | "card_to_card";
+  }): Promise<void> => ipcRenderer.invoke("ledger:recordPayment", input),
   listProducts: (): Promise<ProductDto[]> => ipcRenderer.invoke("product:listActive"),
   createProduct: (input: {
     name: string;

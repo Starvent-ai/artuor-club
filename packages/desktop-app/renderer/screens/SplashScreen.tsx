@@ -22,8 +22,8 @@ export function SplashScreen({ onFinished }: SplashScreenProps) {
 
   return (
     <div className={isFadingOut ? "splash-screen splash-screen--fade-out" : "splash-screen"}>
-      <img className="splash-screen__logo" src="../assets/logo.png" alt="کلاب آرتور" />
-      <p className="splash-screen__tagline">از یک ایده تا یک محصول جهانی با Starvnt</p>
+      <img className="splash-screen__logo" src="./logo.png" alt="کلاب آرتور" />
+      <p className="splash-screen__tagline">از یک ایده تا یک محصول جهانی با Starvent</p>
     </div>
   );
 }

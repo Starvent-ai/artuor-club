@@ -22,12 +22,12 @@
   border-radius: var(--radius-small);
   color: var(--color-text-primary);
   font-family: var(--font-family-base);
-  padding: 10px 18px;
+  padding: var(--spacing-3) var(--spacing-5);
   cursor: pointer;
 }
 
 .reports-screen__title {
-  font-size: 18px;
+  font-size: var(--font-size-title);
   font-weight: 600;
   color: var(--color-text-primary);
 }
@@ -54,21 +54,21 @@
 }
 
 .reports-screen__summary-card--income {
-  border-color: var(--color-accent-felt-strong);
+  border-color: var(--color-accent-strong);
 }
 
 .reports-screen__summary-card--expense {
-  border-color: var(--color-accent-brass-strong);
+  border-color: var(--color-accent-strong);
 }
 
 .reports-screen__summary-label {
-  font-size: 13px;
+  font-size: var(--font-size-body-small);
   color: var(--color-text-secondary);
   margin-bottom: var(--spacing-2);
 }
 
 .reports-screen__summary-value {
-  font-size: 20px;
+  font-size: var(--font-size-title);
   font-weight: 700;
   color: var(--color-text-primary);
 }
@@ -90,7 +90,7 @@
 }
 
 .reports-screen__breakdown-title {
-  font-size: 14px;
+  font-size: var(--font-size-body);
   font-weight: 600;
   color: var(--color-text-primary);
 }
@@ -99,7 +99,7 @@
   display: flex;
   justify-content: space-between;
   color: var(--color-text-secondary);
-  font-size: 13px;
+  font-size: var(--font-size-body-small);
 }
 
 .reports-screen__transactions {
@@ -114,12 +114,16 @@
 
 .reports-screen__transaction-row {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr 1fr;
+  grid-template-columns: 1fr 1.4fr 1fr 1fr 1fr;
   gap: var(--spacing-3);
   padding: var(--spacing-3) 0;
   border-bottom: 1px solid var(--color-border);
-  font-size: 13px;
+  font-size: var(--font-size-body-small);
   color: var(--color-text-secondary);
+}
+
+.reports-screen__transaction-occurred-at {
+  color: var(--color-text-tertiary);
 }
 
 .reports-screen__transaction-amount {

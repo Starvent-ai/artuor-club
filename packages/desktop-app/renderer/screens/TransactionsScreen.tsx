@@ -4,6 +4,8 @@ import type {
   SearchAccountingTransactionsResultDto,
   StaffOptionDto,
 } from "../../preload/index";
+import { JalaliDateField } from "../design-system/JalaliDateField";
+import { formatJalaliDateTimeLabel, jalaliToIsoStartOfDay, isoToJalaliParts } from "../utils/formatJalaliDateTime";
 import "./reports-screen.css";
 import "./transactions-screen.css";
 
@@ -25,21 +27,14 @@ const PAYMENT_METHOD_LABELS: Record<string, string> = {
   ledger: "حساب دفتری",
 };
 
-function toDateInputValue(date: Date): string {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-}
-
 export function TransactionsScreen({ onClose }: TransactionsScreenProps) {
   const [staffOptions, setStaffOptions] = useState<StaffOptionDto[]>([]);
-  const [rangeStart, setRangeStart] = useState<string>(() => {
+  const [rangeStart, setRangeStart] = useState(() => {
     const date = new Date();
     date.setDate(date.getDate() - 7);
-    return toDateInputValue(date);
+    return isoToJalaliParts(date.toISOString());
   });
-  const [rangeEnd, setRangeEnd] = useState<string>(() => toDateInputValue(new Date()));
+  const [rangeEnd, setRangeEnd] = useState(() => isoToJalaliParts(new Date().toISOString()));
   const [staffId, setStaffId] = useState<string>("");
   const [type, setType] = useState<string>("");
   const [paymentMethod, setPaymentMethod] = useState<string>("");
@@ -52,10 +47,11 @@ export function TransactionsScreen({ onClose }: TransactionsScreenProps) {
 
   function runSearch() {
     setIsLoading(true);
-    const startIso = rangeStart ? new Date(`${rangeStart}T00:00:00`).toISOString() : undefined;
-    const endIso = rangeEnd
-      ? new Date(new Date(`${rangeEnd}T00:00:00`).getTime() + 24 * 60 * 60 * 1000).toISOString()
-      : undefined;
+    const startIso = jalaliToIsoStartOfDay(rangeStart.year, rangeStart.month, rangeStart.day);
+    const endIso = new Date(
+      new Date(jalaliToIsoStartOfDay(rangeEnd.year, rangeEnd.month, rangeEnd.day)).getTime() +
+        24 * 60 * 60 * 1000
+    ).toISOString();
 
     window.arthurClub
       .searchTransactions({
@@ -97,17 +93,17 @@ export function TransactionsScreen({ onClose }: TransactionsScreenProps) {
 
       <div className="reports-screen__content">
         <div className="transactions-screen__filters">
-          <input
-            type="date"
-            className="transactions-screen__filter-input"
-            value={rangeStart}
-            onChange={(event) => setRangeStart(event.target.value)}
+          <JalaliDateField
+            year={rangeStart.year}
+            month={rangeStart.month}
+            day={rangeStart.day}
+            onChange={setRangeStart}
           />
-          <input
-            type="date"
-            className="transactions-screen__filter-input"
-            value={rangeEnd}
-            onChange={(event) => setRangeEnd(event.target.value)}
+          <JalaliDateField
+            year={rangeEnd.year}
+            month={rangeEnd.month}
+            day={rangeEnd.day}
+            onChange={setRangeEnd}
           />
           <select
             className="transactions-screen__filter-input"
@@ -187,6 +183,9 @@ export function TransactionsScreen({ onClose }: TransactionsScreenProps) {
                 <div key={transaction.id} className="reports-screen__transaction-row">
                   <span className="reports-screen__transaction-type">
                     {TYPE_LABELS[transaction.type]}
+                  </span>
+                  <span className="reports-screen__transaction-occurred-at">
+                    {formatJalaliDateTimeLabel(transaction.occurredAt)}
                   </span>
                   <span className="reports-screen__transaction-staff">
                     {transaction.staffFullName}

@@ -19,13 +19,13 @@
   width: 280px;
   height: auto;
   object-fit: contain;
-  filter: drop-shadow(0 6px 20px rgba(201, 162, 39, 0.25));
+  filter: drop-shadow(var(--shadow-gold-glow));
   animation: splash-logo-rise 900ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .splash-screen__tagline {
   color: var(--color-text-secondary);
-  font-size: 15px;
+  font-size: var(--font-size-subtitle);
   letter-spacing: 0.3px;
   animation: splash-tagline-fade 900ms ease 200ms both;
 }

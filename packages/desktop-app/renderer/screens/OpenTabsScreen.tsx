@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { PremiumCard } from "../design-system/PremiumCard";
 import { formatTomanWithSeparators } from "../../../core/src/localization/CurrencyFormatter";
+import { formatJalaliDateLabel } from "../utils/formatJalaliDateTime";
 import { CreateOpenTabDialog } from "./CreateOpenTabDialog";
 import { SettleOpenTabDialog } from "./SettleOpenTabDialog";
 import { AddBuffetOrderDialog } from "./AddBuffetOrderDialog";
@@ -70,6 +71,7 @@ export function OpenTabsScreen({ onClose }: OpenTabsScreenProps) {
               onClick={() => setTabPendingSettlement(tab)}
             >
               <div className="open-tabs-screen__tab-name">{tab.customerFullName}</div>
+              <div className="open-tabs-screen__tab-opened-at">{formatJalaliDateLabel(tab.openedAt)}</div>
               <div className="open-tabs-screen__tab-remaining">
                 مانده: {formatTomanWithSeparators(tab.totalAmount - tab.paidAmount)}
               </div>

@@ -10,10 +10,20 @@ export interface LedgerAccountRecord {
   settledAt: string | null;
 }
 
+export interface LedgerAccountSummary {
+  ledgerAccountId: string;
+  customerId: string;
+  customerFullName: string;
+  totalAmount: number;
+  paidAmount: number;
+  openedAt: string;
+}
+
 export interface LedgerAccountRepository {
   create(record: LedgerAccountRecord): void;
   findById(id: string): LedgerAccountRecord | undefined;
   updateAmounts(id: string, totalAmount: number, paidAmount: number): void;
   updateStatus(id: string, status: LedgerAccountRecord["status"], settledAt: string | null): void;
   findAllOpenByCustomerId(customerId: string): LedgerAccountRecord[];
+  listOpenSummaries(customerNamePrefix?: string): LedgerAccountSummary[];
 }

@@ -340,3 +340,71 @@ test("listActiveSummaries returns only active tabs and supports incremental name
   assert.equal(narrower[0].customerFullName, "علیرضا تهرانی");
 });
 
+test("listOpenSummaries returns only open ledger accounts and supports name-prefix search", () => {
+  const scenario = setupScenario();
+
+  const first = scenario.createOpenTabUseCase.execute({
+    customerName: "کیارش مرادی",
+    staffId: scenario.staffId,
+  });
+  const second = scenario.createOpenTabUseCase.execute({
+    customerName: "کیانا فرهادی",
+    staffId: scenario.staffId,
+  });
+  const third = scenario.createOpenTabUseCase.execute({
+    customerName: "سحر امینی",
+    staffId: scenario.staffId,
+  });
+  if (first.status !== "created" || second.status !== "created" || third.status !== "created") return;
+
+  for (const openTabId of [first.openTabId, second.openTabId, third.openTabId]) {
+    scenario.attachItemUseCase.execute({
+      openTabId,
+      sourceType: "table_session",
+      sourceId: randomUUID(),
+      amount: 50000,
+    });
+  }
+
+  const firstSettlement = scenario.settleOpenTabUseCase.execute({
+    openTabId: first.openTabId,
+    method: "ledger",
+    staffId: scenario.staffId,
+  });
+  const secondSettlement = scenario.settleOpenTabUseCase.execute({
+    openTabId: second.openTabId,
+    method: "ledger",
+    staffId: scenario.staffId,
+  });
+  const thirdSettlement = scenario.settleOpenTabUseCase.execute({
+    openTabId: third.openTabId,
+    method: "ledger",
+    staffId: scenario.staffId,
+  });
+  if (
+    firstSettlement.outcome !== "converted_to_ledger" ||
+    secondSettlement.outcome !== "converted_to_ledger" ||
+    thirdSettlement.outcome !== "converted_to_ledger"
+  ) {
+    return;
+  }
+
+  scenario.recordLedgerPaymentUseCase.execute({
+    ledgerAccountId: thirdSettlement.ledgerAccountId,
+    amount: 50000,
+    method: "cash",
+    staffId: scenario.staffId,
+  });
+
+  const all = scenario.ledgerAccountRepository.listOpenSummaries();
+  assert.equal(all.length, 2);
+
+  const filtered = scenario.ledgerAccountRepository.listOpenSummaries("کیا");
+  assert.equal(filtered.length, 2);
+
+  const narrower = scenario.ledgerAccountRepository.listOpenSummaries("کیار");
+  assert.equal(narrower.length, 1);
+  assert.equal(narrower[0].customerFullName, "کیارش مرادی");
+  assert.equal(narrower[0].totalAmount, 50000);
+});
+

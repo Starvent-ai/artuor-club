@@ -19,24 +19,24 @@
 }
 
 .unit-status-card__name {
-  font-size: 16px;
+  font-size: var(--font-size-subtitle);
   font-weight: 600;
   color: var(--color-text-primary);
 }
 
 .unit-status-card__badge {
-  font-size: 12px;
-  padding: 4px 10px;
+  font-size: var(--font-size-caption);
+  padding: var(--spacing-1) var(--spacing-3);
   border-radius: 999px;
   font-weight: 500;
 }
 
 .unit-status-card__badge--free {
-  background: rgba(47, 158, 99, 0.15);
+  background: var(--color-success-soft);
   color: var(--color-success);
 }
 
 .unit-status-card__badge--in-use {
-  background: rgba(201, 162, 39, 0.15);
-  color: var(--color-accent-brass-strong);
+  background: var(--color-accent-soft-bg);
+  color: var(--color-accent-strong);
 }

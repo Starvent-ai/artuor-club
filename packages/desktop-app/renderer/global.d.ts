@@ -1,6 +1,7 @@
 import type {
   EntryScreenData,
   OpenTabSummaryDto,
+  LedgerAccountSummaryDto,
   CreateOpenTabResultDto,
   ProductDto,
   CreateBuffetOrderResultDto,
@@ -37,6 +38,12 @@ declare global {
       settleOpenTab: (input: {
         openTabId: string;
         method: "cash" | "pos" | "card_to_card" | "ledger";
+      }) => Promise<void>;
+      listLedgerAccounts: (namePrefix?: string) => Promise<LedgerAccountSummaryDto[]>;
+      recordLedgerPayment: (input: {
+        ledgerAccountId: string;
+        amount: number;
+        method: "cash" | "pos" | "card_to_card";
       }) => Promise<void>;
       listProducts: () => Promise<ProductDto[]>;
       createProduct: (input: {

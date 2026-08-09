@@ -23,11 +23,12 @@ interface HomeScreenProps {
   onSettingsClick: () => void;
   onReportsClick: () => void;
   onTransactionsClick: () => void;
+  onLedgerClick: () => void;
 }
 
-const TABLE_PLACEHOLDER = "../assets/placeholders/billiard-table.svg";
-const PS4_PLACEHOLDER = "../assets/placeholders/ps4-device.svg";
-const PS5_PLACEHOLDER = "../assets/placeholders/ps5-device.svg";
+const TABLE_PLACEHOLDER = "./placeholders/billiard-table.svg";
+const PS4_PLACEHOLDER = "./placeholders/ps4-device.svg";
+const PS5_PLACEHOLDER = "./placeholders/ps5-device.svg";
 
 export function HomeScreen({
   tables,
@@ -38,6 +39,7 @@ export function HomeScreen({
   onSettingsClick,
   onReportsClick,
   onTransactionsClick,
+  onLedgerClick,
 }: HomeScreenProps) {
   return (
     <div className="home-screen">
@@ -51,6 +53,9 @@ export function HomeScreen({
         </button>
         <button type="button" className="home-screen__settings-button" onClick={onReportsClick}>
           گزارش‌ها
+        </button>
+        <button type="button" className="home-screen__settings-button" onClick={onLedgerClick}>
+          حسابداری
         </button>
         <button type="button" className="home-screen__settings-button" onClick={onSettingsClick}>
           تنظیمات
