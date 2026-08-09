@@ -34,6 +34,8 @@ jobs:
           node-version: "22"
 
       - run: npm install
+
+      - run: npm install
         working-directory: packages/desktop-app
 
       - run: npm run build
