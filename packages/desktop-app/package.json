@@ -1,6 +1,8 @@
 {
   "name": "@arthurclub/desktop-app",
   "version": "0.1.0",
+  "description": "ArthurClub billiard club management desktop application",
+  "author": "Starvent",
   "private": true,
   "main": "dist/desktop-app/main/index.js",
   "scripts": {
@@ -10,7 +12,8 @@
     "copy:migrations": "node scripts/copyMigrations.js",
     "build": "npm run build:renderer && npm run build:main && npm run copy:migrations",
     "start": "electron dist/desktop-app/main/index.js",
-    "dist:win": "npm run build && electron-builder --win"
+    "rebuild:native": "electron-rebuild -f -w better-sqlite3",
+    "dist:win": "npm run build && npm run rebuild:native && electron-builder --win"
   },
   "dependencies": {
     "react": "18.3.1",
@@ -20,6 +23,7 @@
   "devDependencies": {
     "electron": "32.1.2",
     "electron-builder": "25.1.8",
+    "@electron/rebuild": "^4.0.1",
     "vite": "5.4.9",
     "@vitejs/plugin-react": "4.3.2",
     "typescript": "5.6.3",
@@ -29,6 +33,7 @@
   "build": {
     "appId": "ir.starvent.arthurclub",
     "productName": "ArthurClub",
+    "npmRebuild": false,
     "directories": {
       "output": "release",
       "buildResources": "build"

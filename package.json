@@ -4,14 +4,13 @@
   "private": true,
   "workspaces": [
     "packages/core",
-    "packages/infrastructure/database",
-    "packages/desktop-app"
+    "packages/infrastructure/database"
   ],
   "scripts": {
     "test:core": "npm run test --workspace=packages/core",
     "test:database": "npm run test --workspace=packages/infrastructure/database",
     "test": "npm run test:core && npm run test:database",
-    "build:desktop": "npm run build --workspace=packages/desktop-app",
-    "dist:win": "npm run dist:win --workspace=packages/desktop-app"
+    "build:desktop": "npm --prefix packages/desktop-app run build",
+    "dist:win": "npm --prefix packages/desktop-app run dist:win"
   }
 }

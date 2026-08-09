@@ -34,8 +34,13 @@ jobs:
           node-version: "22"
 
       - run: npm install
+        working-directory: packages/desktop-app
 
-      - run: npm run build --workspace=packages/desktop-app
+      - run: npm run build
+        working-directory: packages/desktop-app
+
+      - run: npm run rebuild:native
+        working-directory: packages/desktop-app
 
       - run: npx electron-builder --win --publish never
         working-directory: packages/desktop-app
