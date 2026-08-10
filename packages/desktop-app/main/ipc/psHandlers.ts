@@ -6,11 +6,14 @@ import { SqlDeviceControllerRateRepository } from "../../../infrastructure/datab
 import { SqlPsSessionRepository } from "../../../infrastructure/database/src/repositories/SqlPsSessionRepository";
 import { SqlPsSessionSegmentRepository } from "../../../infrastructure/database/src/repositories/SqlPsSessionSegmentRepository";
 import { SqlAccountingTransactionRepository } from "../../../infrastructure/database/src/repositories/SqlAccountingTransactionRepository";
+import { SqlOpenTabItemRepository } from "../../../infrastructure/database/src/repositories/SqlOpenTabItemRepository";
+import { SqlAuditLogRepository } from "../../../infrastructure/database/src/repositories/SqlAuditLogRepository";
 import { StartPsSessionUseCase } from "../../../core/src/application/use-cases/StartPsSessionUseCase";
 import { ChangePsSessionControllerCountUseCase } from "../../../core/src/application/use-cases/ChangePsSessionControllerCountUseCase";
 import { EndPsSessionUseCase } from "../../../core/src/application/use-cases/EndPsSessionUseCase";
 import { CreateDeviceUseCase } from "../../../core/src/application/use-cases/CreateDeviceUseCase";
 import { SetDeviceControllerRateUseCase } from "../../../core/src/application/use-cases/SetDeviceControllerRateUseCase";
+import { randomUUID } from "node:crypto";
 import { getCurrentStaffId } from "../currentSession";
 
 export function registerPsHandlers(ipcMain: IpcMain, connection: DatabaseConnection): void {
@@ -20,6 +23,8 @@ export function registerPsHandlers(ipcMain: IpcMain, connection: DatabaseConnect
   const sessionRepository = new SqlPsSessionRepository(connection);
   const segmentRepository = new SqlPsSessionSegmentRepository(connection);
   const accountingTransactionRepository = new SqlAccountingTransactionRepository(connection);
+  const openTabItemRepository = new SqlOpenTabItemRepository(connection);
+  const auditLogRepository = new SqlAuditLogRepository(connection);
 
   const startPsSessionUseCase = new StartPsSessionUseCase(
     deviceRepository,
@@ -93,11 +98,16 @@ export function registerPsHandlers(ipcMain: IpcMain, connection: DatabaseConnect
       if (!session) {
         throw new Error("ACTIVE_SESSION_NOT_FOUND");
       }
+      const hasAttachedItems = session.openTabId
+        ? openTabItemRepository
+            .findByOpenTabId(session.openTabId)
+            .some((item) => item.sourceType !== "ps_session" || item.sourceId !== session.id)
+        : false;
       return endPsSessionUseCase.execute({
         sessionId: session.id,
         staffId,
         paymentMethod: input.paymentMethod,
-        hasAttachedItems: false,
+        hasAttachedItems,
       });
     }
   );
@@ -109,12 +119,35 @@ export function registerPsHandlers(ipcMain: IpcMain, connection: DatabaseConnect
   ipcMain.handle(
     "device:create",
     (_event, input: { name: string; deviceType: "ps4" | "ps5"; maxControllers?: number }) => {
-      return createDeviceUseCase.execute(input);
+      const actingStaffId = getCurrentStaffId();
+      const deviceId = createDeviceUseCase.execute(input);
+      auditLogRepository.record({
+        id: randomUUID(),
+        entityType: "device",
+        entityId: deviceId,
+        action: "create",
+        oldValue: null,
+        newValue: JSON.stringify(input),
+        staffId: actingStaffId,
+        occurredAt: new Date().toISOString(),
+      });
+      return deviceId;
     }
   );
 
   ipcMain.handle("device:deactivate", (_event, deviceId: string) => {
+    const actingStaffId = getCurrentStaffId();
     deviceRepository.deactivate(deviceId);
+    auditLogRepository.record({
+      id: randomUUID(),
+      entityType: "device",
+      entityId: deviceId,
+      action: "delete",
+      oldValue: null,
+      newValue: null,
+      staffId: actingStaffId,
+      occurredAt: new Date().toISOString(),
+    });
   });
 
   ipcMain.handle("deviceControllerRate:listByType", (_event, deviceType: "ps4" | "ps5") => {
@@ -124,7 +157,19 @@ export function registerPsHandlers(ipcMain: IpcMain, connection: DatabaseConnect
   ipcMain.handle(
     "deviceControllerRate:set",
     (_event, input: { deviceType: "ps4" | "ps5"; controllerCount: number; hourlyRate: number }) => {
+      const actingStaffId = getCurrentStaffId();
+      const before = rateRepository.findRate(input.deviceType, input.controllerCount);
       setDeviceControllerRateUseCase.execute(input);
+      auditLogRepository.record({
+        id: randomUUID(),
+        entityType: "device_controller_rate",
+        entityId: `${input.deviceType}:${input.controllerCount}`,
+        action: before ? "update" : "create",
+        oldValue: before ? JSON.stringify({ hourlyRate: before.hourlyRate }) : null,
+        newValue: JSON.stringify({ hourlyRate: input.hourlyRate }),
+        staffId: actingStaffId,
+        occurredAt: new Date().toISOString(),
+      });
     }
   );
 }

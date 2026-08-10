@@ -6,10 +6,13 @@ import { SqlTableSessionRepository } from "../../../infrastructure/database/src/
 import { SqlDeviceRepository } from "../../../infrastructure/database/src/repositories/SqlDeviceRepository";
 import { SqlAccountingTransactionRepository } from "../../../infrastructure/database/src/repositories/SqlAccountingTransactionRepository";
 import { SqlTableTypeRepository } from "../../../infrastructure/database/src/repositories/SqlTableTypeRepository";
+import { SqlOpenTabItemRepository } from "../../../infrastructure/database/src/repositories/SqlOpenTabItemRepository";
+import { SqlAuditLogRepository } from "../../../infrastructure/database/src/repositories/SqlAuditLogRepository";
 import { StartTableSessionUseCase } from "../../../core/src/application/use-cases/StartTableSessionUseCase";
 import { EndTableSessionUseCase } from "../../../core/src/application/use-cases/EndTableSessionUseCase";
 import { CreateTableTypeUseCase } from "../../../core/src/application/use-cases/CreateTableTypeUseCase";
 import { CreateTableUseCase } from "../../../core/src/application/use-cases/CreateTableUseCase";
+import { randomUUID } from "node:crypto";
 import { getCurrentStaffId } from "../currentSession";
 
 export function registerTableHandlers(ipcMain: IpcMain, connection: DatabaseConnection): void {
@@ -19,6 +22,8 @@ export function registerTableHandlers(ipcMain: IpcMain, connection: DatabaseConn
   const deviceRepository = new SqlDeviceRepository(connection);
   const accountingTransactionRepository = new SqlAccountingTransactionRepository(connection);
   const tableTypeRepository = new SqlTableTypeRepository(connection);
+  const openTabItemRepository = new SqlOpenTabItemRepository(connection);
+  const auditLogRepository = new SqlAuditLogRepository(connection);
 
   const startTableSessionUseCase = new StartTableSessionUseCase(tableRepository, tableSessionRepository);
   const endTableSessionUseCase = new EndTableSessionUseCase(
@@ -78,11 +83,17 @@ export function registerTableHandlers(ipcMain: IpcMain, connection: DatabaseConn
         throw new Error("ACTIVE_SESSION_NOT_FOUND");
       }
 
+      const hasAttachedItems = activeSession.openTabId
+        ? openTabItemRepository
+            .findByOpenTabId(activeSession.openTabId)
+            .some((item) => item.sourceType !== "table_session" || item.sourceId !== activeSession.id)
+        : false;
+
       return endTableSessionUseCase.execute({
         sessionId: activeSession.id,
         staffId,
         paymentMethod: input.paymentMethod,
-        hasAttachedItems: false,
+        hasAttachedItems,
       });
     }
   );
@@ -96,18 +107,65 @@ export function registerTableHandlers(ipcMain: IpcMain, connection: DatabaseConn
   });
 
   ipcMain.handle("tableType:create", (_event, input: { name: string; hourlyRate: number }) => {
-    return createTableTypeUseCase.execute(input);
+    const staffId = getCurrentStaffId();
+    const tableTypeId = createTableTypeUseCase.execute(input);
+    auditLogRepository.record({
+      id: randomUUID(),
+      entityType: "table_type",
+      entityId: tableTypeId,
+      action: "create",
+      oldValue: null,
+      newValue: JSON.stringify(input),
+      staffId,
+      occurredAt: new Date().toISOString(),
+    });
+    return tableTypeId;
   });
 
   ipcMain.handle("tableType:updateRate", (_event, input: { id: string; hourlyRate: number }) => {
+    const staffId = getCurrentStaffId();
+    const before = tableTypeRepository.findById(input.id);
     tableTypeRepository.updateRate(input.id, input.hourlyRate);
+    auditLogRepository.record({
+      id: randomUUID(),
+      entityType: "table_type",
+      entityId: input.id,
+      action: "update",
+      oldValue: before ? JSON.stringify({ hourlyRate: before.hourlyRate }) : null,
+      newValue: JSON.stringify({ hourlyRate: input.hourlyRate }),
+      staffId,
+      occurredAt: new Date().toISOString(),
+    });
   });
 
   ipcMain.handle("table:create", (_event, input: { name: string; tableTypeId: string }) => {
-    return createTableUseCase.execute(input);
+    const staffId = getCurrentStaffId();
+    const tableId = createTableUseCase.execute(input);
+    auditLogRepository.record({
+      id: randomUUID(),
+      entityType: "billiard_table",
+      entityId: tableId,
+      action: "create",
+      oldValue: null,
+      newValue: JSON.stringify(input),
+      staffId,
+      occurredAt: new Date().toISOString(),
+    });
+    return tableId;
   });
 
   ipcMain.handle("table:deactivate", (_event, tableId: string) => {
+    const staffId = getCurrentStaffId();
     tableRepository.deactivate(tableId);
+    auditLogRepository.record({
+      id: randomUUID(),
+      entityType: "billiard_table",
+      entityId: tableId,
+      action: "delete",
+      oldValue: null,
+      newValue: null,
+      staffId,
+      occurredAt: new Date().toISOString(),
+    });
   });
 }

@@ -9,6 +9,7 @@ import { SqlTableTypeRepository } from "../repositories/SqlTableTypeRepository";
 import { SqlTableRepository } from "../repositories/SqlTableRepository";
 import { SqlDeviceRepository } from "../repositories/SqlDeviceRepository";
 import { SqlDeviceControllerRateRepository } from "../repositories/SqlDeviceControllerRateRepository";
+import { SqlAuditLogRepository } from "../repositories/SqlAuditLogRepository";
 
 function buildMigratedConnection(): NodeSqliteTestConnection {
   const connection = new NodeSqliteTestConnection();
@@ -98,4 +99,27 @@ test("device controller rates can be inserted and updated via upsert", () => {
   repository.upsert({ id: randomUUID(), deviceType: "ps5", controllerCount: 1, hourlyRate: 35000 });
   assert.equal(repository.findRate("ps5", 1)?.hourlyRate, 35000);
   assert.equal(repository.findAllByDeviceType("ps5").length, 2);
+});
+
+test("audit log records critical changes without exposing any query surface", () => {
+  const connection = buildMigratedConnection();
+  const repository = new SqlAuditLogRepository(connection);
+
+  repository.record({
+    id: randomUUID(),
+    entityType: "table_type",
+    entityId: randomUUID(),
+    action: "update",
+    oldValue: JSON.stringify({ hourlyRate: 60000 }),
+    newValue: JSON.stringify({ hourlyRate: 75000 }),
+    staffId: null,
+    occurredAt: new Date().toISOString(),
+  });
+
+  const rows = connection.queryAll<{ entity_type: string; action: string }>(
+    "SELECT * FROM audit_log"
+  );
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].entity_type, "table_type");
+  assert.equal(rows[0].action, "update");
 });
