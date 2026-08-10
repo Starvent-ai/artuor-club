@@ -16,11 +16,8 @@ export interface OpenTabSummary {
   openedAt: string;
 }
 
-interface OpenTabsScreenProps {
-  onClose: () => void;
-}
 
-export function OpenTabsScreen({ onClose }: OpenTabsScreenProps) {
+export function OpenTabsScreen() {
   const [searchTerm, setSearchTerm] = useState("");
   const [tabs, setTabs] = useState<OpenTabSummary[]>([]);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -43,9 +40,6 @@ export function OpenTabsScreen({ onClose }: OpenTabsScreenProps) {
   return (
     <div className="open-tabs-screen">
       <div className="open-tabs-screen__header">
-        <button type="button" className="open-tabs-screen__back-button" onClick={onClose}>
-          بازگشت
-        </button>
         <input
           type="text"
           className="open-tabs-screen__search"

@@ -9,6 +9,8 @@ import { SqlAccountingTransactionRepository } from "../../../infrastructure/data
 import { StartPsSessionUseCase } from "../../../core/src/application/use-cases/StartPsSessionUseCase";
 import { ChangePsSessionControllerCountUseCase } from "../../../core/src/application/use-cases/ChangePsSessionControllerCountUseCase";
 import { EndPsSessionUseCase } from "../../../core/src/application/use-cases/EndPsSessionUseCase";
+import { CreateDeviceUseCase } from "../../../core/src/application/use-cases/CreateDeviceUseCase";
+import { SetDeviceControllerRateUseCase } from "../../../core/src/application/use-cases/SetDeviceControllerRateUseCase";
 import { getCurrentStaffId } from "../currentSession";
 
 export function registerPsHandlers(ipcMain: IpcMain, connection: DatabaseConnection): void {
@@ -38,6 +40,8 @@ export function registerPsHandlers(ipcMain: IpcMain, connection: DatabaseConnect
     segmentRepository,
     accountingTransactionRepository
   );
+  const createDeviceUseCase = new CreateDeviceUseCase(deviceRepository);
+  const setDeviceControllerRateUseCase = new SetDeviceControllerRateUseCase(rateRepository);
 
   function resolveStaffId(): string {
     const staffId = getCurrentStaffId() ?? staffRepository.findAllActive()[0]?.id;
@@ -95,6 +99,32 @@ export function registerPsHandlers(ipcMain: IpcMain, connection: DatabaseConnect
         paymentMethod: input.paymentMethod,
         hasAttachedItems: false,
       });
+    }
+  );
+
+  ipcMain.handle("device:listActive", () => {
+    return deviceRepository.findAllActive();
+  });
+
+  ipcMain.handle(
+    "device:create",
+    (_event, input: { name: string; deviceType: "ps4" | "ps5"; maxControllers?: number }) => {
+      return createDeviceUseCase.execute(input);
+    }
+  );
+
+  ipcMain.handle("device:deactivate", (_event, deviceId: string) => {
+    deviceRepository.deactivate(deviceId);
+  });
+
+  ipcMain.handle("deviceControllerRate:listByType", (_event, deviceType: "ps4" | "ps5") => {
+    return rateRepository.findAllByDeviceType(deviceType);
+  });
+
+  ipcMain.handle(
+    "deviceControllerRate:set",
+    (_event, input: { deviceType: "ps4" | "ps5"; controllerCount: number; hourlyRate: number }) => {
+      setDeviceControllerRateUseCase.execute(input);
     }
   );
 }

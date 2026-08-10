@@ -14,16 +14,10 @@ import { ManagePsSessionDialog } from "./screens/ManagePsSessionDialog";
 import { StartTableSessionDialog } from "./screens/StartTableSessionDialog";
 import { ManageTableSessionDialog } from "./screens/ManageTableSessionDialog";
 import { PaymentMethodDialog } from "./screens/PaymentMethodDialog";
+import { Sidebar, AppSection } from "./design-system/Sidebar";
+import "./app-shell.css";
 
-type AppPhase =
-  | "splash"
-  | "staff_selection"
-  | "main_application"
-  | "open_tabs"
-  | "settings"
-  | "reports"
-  | "transactions"
-  | "ledger";
+type AppPhase = "splash" | "staff_selection" | "main_application";
 
 interface StaffOption {
   id: string;
@@ -38,6 +32,7 @@ interface AppProps {
 
 export function App({ entryScreen, staffOptions, onStaffSelected }: AppProps) {
   const [phase, setPhase] = useState<AppPhase>("splash");
+  const [activeSection, setActiveSection] = useState<AppSection>("home");
   const [tables, setTables] = useState<HomeScreenTable[]>([]);
   const [devices, setDevices] = useState<HomeScreenDevice[]>([]);
   const [isPasswordPromptOpen, setIsPasswordPromptOpen] = useState(false);
@@ -77,33 +72,15 @@ export function App({ entryScreen, staffOptions, onStaffSelected }: AppProps) {
     );
   }
 
-  if (phase === "open_tabs") {
-    return <OpenTabsScreen onClose={() => setPhase("main_application")} />;
-  }
-
-  if (phase === "settings") {
-    return <SettingsScreen onClose={() => setPhase("main_application")} />;
-  }
-
-  if (phase === "reports") {
-    return <ReportsScreen onClose={() => setPhase("main_application")} />;
-  }
-
-  if (phase === "transactions") {
-    return <TransactionsScreen onClose={() => setPhase("main_application")} />;
-  }
-
-  if (phase === "ledger") {
-    return <LedgerScreen onClose={() => setPhase("main_application")} />;
-  }
-
-  async function openSettings() {
-    const status = await window.arthurClub.getSecurityStatus();
-    if (status.isPasswordSet) {
-      setIsPasswordPromptOpen(true);
-    } else {
-      setPhase("settings");
+  async function selectSection(section: AppSection) {
+    if (section === "settings") {
+      const status = await window.arthurClub.getSecurityStatus();
+      if (status.isPasswordSet) {
+        setIsPasswordPromptOpen(true);
+        return;
+      }
     }
+    setActiveSection(section);
   }
 
   const selectedDevice = devices.find((device) => device.id === selectedDeviceId) ?? null;
@@ -131,18 +108,24 @@ export function App({ entryScreen, staffOptions, onStaffSelected }: AppProps) {
   }
 
   return (
-    <>
-      <HomeScreen
-        tables={tables}
-        devices={devices}
-        onTableClick={handleTableClick}
-        onDeviceClick={(deviceId) => setSelectedDeviceId(deviceId)}
-        onOpenTabsClick={() => setPhase("open_tabs")}
-        onSettingsClick={openSettings}
-        onReportsClick={() => setPhase("reports")}
-        onTransactionsClick={() => setPhase("transactions")}
-        onLedgerClick={() => setPhase("ledger")}
-      />
+    <div className="app-shell">
+      <div className="app-shell__content">
+        {activeSection === "home" && (
+          <HomeScreen
+            tables={tables}
+            devices={devices}
+            onTableClick={handleTableClick}
+            onDeviceClick={(deviceId) => setSelectedDeviceId(deviceId)}
+          />
+        )}
+        {activeSection === "open_tabs" && <OpenTabsScreen />}
+        {activeSection === "ledger" && <LedgerScreen />}
+        {activeSection === "reports" && <ReportsScreen />}
+        {activeSection === "transactions" && <TransactionsScreen />}
+        {activeSection === "settings" && <SettingsScreen />}
+      </div>
+
+      <Sidebar activeSection={activeSection} onSelect={selectSection} />
 
       {tableIdPendingPayment && (
         <PaymentMethodDialog
@@ -205,7 +188,7 @@ export function App({ entryScreen, staffOptions, onStaffSelected }: AppProps) {
         <PasswordPromptDialog
           onUnlocked={() => {
             setIsPasswordPromptOpen(false);
-            setPhase("settings");
+            setActiveSection("settings");
           }}
           onCancel={() => setIsPasswordPromptOpen(false)}
           onForgotPassword={() => {
@@ -219,13 +202,11 @@ export function App({ entryScreen, staffOptions, onStaffSelected }: AppProps) {
         <ForgotPasswordDialog
           onRecovered={() => {
             setIsForgotPasswordOpen(false);
-            setPhase("settings");
+            setActiveSection("settings");
           }}
           onCancel={() => setIsForgotPasswordOpen(false)}
         />
       )}
-    </>
+    </div>
   );
 }
-
-

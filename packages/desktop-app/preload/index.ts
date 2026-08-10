@@ -106,6 +106,38 @@ export interface StaffOptionDto {
   isActive: boolean;
 }
 
+export interface TableTypeDto {
+  id: string;
+  name: string;
+  hourlyRate: number;
+  isActive: boolean;
+}
+
+export interface TableDto {
+  id: string;
+  name: string;
+  tableTypeId: string;
+  hourlyRate: number;
+  status: "free" | "in_use";
+  isActive: boolean;
+}
+
+export interface DeviceDto {
+  id: string;
+  name: string;
+  deviceType: "ps4" | "ps5";
+  maxControllers: number;
+  status: "free" | "in_use";
+  isActive: boolean;
+}
+
+export interface DeviceControllerRateDto {
+  id: string;
+  deviceType: "ps4" | "ps5";
+  controllerCount: number;
+  hourlyRate: number;
+}
+
 export interface SearchAccountingTransactionsResultDto {
   summary: AccountingSummaryDto;
   transactions: ReportTransactionLineDto[];
@@ -125,6 +157,31 @@ export interface EndPsSessionResultDto {
 contextBridge.exposeInMainWorld("arthurClub", {
   getEntryScreenData: (): Promise<EntryScreenData> => ipcRenderer.invoke("staff:getEntryScreenData"),
   setCurrentStaff: (staffId: string): Promise<void> => ipcRenderer.invoke("staff:setCurrentStaff", staffId),
+  createStaff: (input: { fullName: string }): Promise<string> => ipcRenderer.invoke("staff:create", input),
+  deactivateStaff: (staffId: string): Promise<void> => ipcRenderer.invoke("staff:deactivate", staffId),
+  listTableTypes: (): Promise<TableTypeDto[]> => ipcRenderer.invoke("tableType:listActive"),
+  createTableType: (input: { name: string; hourlyRate: number }): Promise<string> =>
+    ipcRenderer.invoke("tableType:create", input),
+  updateTableTypeRate: (input: { id: string; hourlyRate: number }): Promise<void> =>
+    ipcRenderer.invoke("tableType:updateRate", input),
+  createTable: (input: { name: string; tableTypeId: string }): Promise<string> =>
+    ipcRenderer.invoke("table:create", input),
+  deactivateTable: (tableId: string): Promise<void> => ipcRenderer.invoke("table:deactivate", tableId),
+  listTables: (): Promise<TableDto[]> => ipcRenderer.invoke("table:listActive"),
+  createDevice: (input: {
+    name: string;
+    deviceType: "ps4" | "ps5";
+    maxControllers?: number;
+  }): Promise<string> => ipcRenderer.invoke("device:create", input),
+  deactivateDevice: (deviceId: string): Promise<void> => ipcRenderer.invoke("device:deactivate", deviceId),
+  listDevices: (): Promise<DeviceDto[]> => ipcRenderer.invoke("device:listActive"),
+  listDeviceControllerRates: (deviceType: "ps4" | "ps5"): Promise<DeviceControllerRateDto[]> =>
+    ipcRenderer.invoke("deviceControllerRate:listByType", deviceType),
+  setDeviceControllerRate: (input: {
+    deviceType: "ps4" | "ps5";
+    controllerCount: number;
+    hourlyRate: number;
+  }): Promise<void> => ipcRenderer.invoke("deviceControllerRate:set", input),
   getHomeScreenData: () => ipcRenderer.invoke("home:getScreenData"),
   toggleTableSession: (tableId: string) => ipcRenderer.invoke("table:toggleSession", tableId),
   endTableSession: (input: {

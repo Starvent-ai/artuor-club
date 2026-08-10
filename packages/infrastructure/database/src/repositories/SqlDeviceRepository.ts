@@ -39,4 +39,15 @@ export class SqlDeviceRepository implements DeviceRepository {
   updateStatus(id: string, status: DeviceRecord["status"]): void {
     this.connection.execute("UPDATE device SET status = ? WHERE id = ?", [status, id]);
   }
+
+  create(input: { id: string; name: string; deviceType: "ps4" | "ps5"; maxControllers: number }): void {
+    this.connection.execute(
+      "INSERT INTO device (id, name, device_type, max_controllers, status, is_active) VALUES (?, ?, ?, ?, 'free', 1)",
+      [input.id, input.name, input.deviceType, input.maxControllers]
+    );
+  }
+
+  deactivate(id: string): void {
+    this.connection.execute("UPDATE device SET is_active = 0 WHERE id = ?", [id]);
+  }
 }

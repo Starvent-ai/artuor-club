@@ -4,9 +4,6 @@ import { gregorianToJalali, formatJalaliDate } from "../../../core/src/localizat
 import type { DailyReportDto } from "../../preload/index";
 import "./reports-screen.css";
 
-interface ReportsScreenProps {
-  onClose: () => void;
-}
 
 const TYPE_LABELS: Record<string, string> = {
   table_income: "درآمد میز",
@@ -37,7 +34,7 @@ function toJalaliLabel(date: Date): string {
   return formatJalaliDate(jalali);
 }
 
-export function ReportsScreen({ onClose }: ReportsScreenProps) {
+export function ReportsScreen() {
   const [report, setReport] = useState<DailyReportDto | null>(null);
   const [rangeStart] = useState<Date>(startOfToday());
   const [rangeEnd] = useState<Date>(endOfToday());
@@ -54,9 +51,6 @@ export function ReportsScreen({ onClose }: ReportsScreenProps) {
   return (
     <div className="reports-screen">
       <div className="reports-screen__header">
-        <button type="button" className="reports-screen__back-button" onClick={onClose}>
-          بازگشت
-        </button>
         <h1 className="reports-screen__title">گزارش امروز — {toJalaliLabel(rangeStart)}</h1>
       </div>
 

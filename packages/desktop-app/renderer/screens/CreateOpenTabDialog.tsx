@@ -19,19 +19,22 @@ export function CreateOpenTabDialog({ onCreated, onCancel }: CreateOpenTabDialog
 
   async function submit(confirmedDespiteSimilarName: boolean) {
     setIsSubmitting(true);
-    const result = await window.arthurClub.createOpenTab({
-      customerName: customerName.trim(),
-      phoneNumber: phoneNumber.trim() || undefined,
-      confirmedDespiteSimilarName,
-    });
-    setIsSubmitting(false);
+    try {
+      const result = await window.arthurClub.createOpenTab({
+        customerName: customerName.trim(),
+        phoneNumber: phoneNumber.trim() || undefined,
+        confirmedDespiteSimilarName,
+      });
 
-    if (result.status === "needs_confirmation") {
-      setSimilarCustomers(result.similarCustomers);
-      return;
+      if (result.status === "needs_confirmation") {
+        setSimilarCustomers(result.similarCustomers);
+        return;
+      }
+
+      onCreated(result.openTabId);
+    } finally {
+      setIsSubmitting(false);
     }
-
-    onCreated(result.openTabId);
   }
 
   return (

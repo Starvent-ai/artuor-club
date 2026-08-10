@@ -47,6 +47,17 @@ class InMemoryStaffRepository implements StaffRepository {
   findById(id: string): StaffRecord | undefined {
     return this.staff.find((member) => member.id === id);
   }
+
+  create(record: StaffRecord): void {
+    this.staff.push(record);
+  }
+
+  deactivate(id: string): void {
+    const member = this.staff.find((item) => item.id === id);
+    if (member) {
+      member.isActive = false;
+    }
+  }
 }
 
 test("only includes transactions within the requested date range", () => {

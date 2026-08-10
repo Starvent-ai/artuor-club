@@ -11,4 +11,6 @@ export interface TableRepository {
   findAllActive(): TableRecord[];
   findById(id: string): TableRecord | undefined;
   updateStatus(id: string, status: TableRecord["status"]): void;
+  create(input: { id: string; name: string; tableTypeId: string; createdAt: string }): void;
+  deactivate(id: string): void;
 }

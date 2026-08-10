@@ -41,7 +41,6 @@
   border-color: var(--color-accent);
 }
 
-.open-tabs-screen__back-button,
 .open-tabs-screen__create-button {
   background: var(--color-surface);
   border: 1px solid var(--color-border-strong);

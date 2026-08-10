@@ -36,4 +36,19 @@ export class SqlStaffRepository implements StaffRepository {
     const row = this.connection.queryOne<StaffRow>("SELECT * FROM staff WHERE id = ?", [id]);
     return row ? toRecord(row) : undefined;
   }
+
+  create(record: StaffRecord): void {
+    const now = new Date().toISOString();
+    this.connection.execute(
+      "INSERT INTO staff (id, full_name, is_active, created_at, updated_at, sync_status) VALUES (?, ?, 1, ?, ?, 'local')",
+      [record.id, record.fullName, now, now]
+    );
+  }
+
+  deactivate(id: string): void {
+    this.connection.execute("UPDATE staff SET is_active = 0, updated_at = ? WHERE id = ?", [
+      new Date().toISOString(),
+      id,
+    ]);
+  }
 }

@@ -33,4 +33,27 @@ export class SqlDeviceControllerRateRepository implements DeviceControllerRateRe
     );
     return row ? toRecord(row) : undefined;
   }
+
+  findAllByDeviceType(deviceType: "ps4" | "ps5"): DeviceControllerRateRecord[] {
+    const rows = this.connection.queryAll<DeviceControllerRateRow>(
+      "SELECT * FROM device_controller_rate WHERE device_type = ? ORDER BY controller_count ASC",
+      [deviceType]
+    );
+    return rows.map(toRecord);
+  }
+
+  upsert(record: DeviceControllerRateRecord): void {
+    const existing = this.findRate(record.deviceType, record.controllerCount);
+    if (existing) {
+      this.connection.execute("UPDATE device_controller_rate SET hourly_rate = ? WHERE id = ?", [
+        record.hourlyRate,
+        existing.id,
+      ]);
+      return;
+    }
+    this.connection.execute(
+      "INSERT INTO device_controller_rate (id, device_type, controller_count, hourly_rate) VALUES (?, ?, ?, ?)",
+      [record.id, record.deviceType, record.controllerCount, record.hourlyRate]
+    );
+  }
 }

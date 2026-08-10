@@ -5,8 +5,11 @@ import { SqlTableRepository } from "../../../infrastructure/database/src/reposit
 import { SqlTableSessionRepository } from "../../../infrastructure/database/src/repositories/SqlTableSessionRepository";
 import { SqlDeviceRepository } from "../../../infrastructure/database/src/repositories/SqlDeviceRepository";
 import { SqlAccountingTransactionRepository } from "../../../infrastructure/database/src/repositories/SqlAccountingTransactionRepository";
+import { SqlTableTypeRepository } from "../../../infrastructure/database/src/repositories/SqlTableTypeRepository";
 import { StartTableSessionUseCase } from "../../../core/src/application/use-cases/StartTableSessionUseCase";
 import { EndTableSessionUseCase } from "../../../core/src/application/use-cases/EndTableSessionUseCase";
+import { CreateTableTypeUseCase } from "../../../core/src/application/use-cases/CreateTableTypeUseCase";
+import { CreateTableUseCase } from "../../../core/src/application/use-cases/CreateTableUseCase";
 import { getCurrentStaffId } from "../currentSession";
 
 export function registerTableHandlers(ipcMain: IpcMain, connection: DatabaseConnection): void {
@@ -15,6 +18,7 @@ export function registerTableHandlers(ipcMain: IpcMain, connection: DatabaseConn
   const tableSessionRepository = new SqlTableSessionRepository(connection);
   const deviceRepository = new SqlDeviceRepository(connection);
   const accountingTransactionRepository = new SqlAccountingTransactionRepository(connection);
+  const tableTypeRepository = new SqlTableTypeRepository(connection);
 
   const startTableSessionUseCase = new StartTableSessionUseCase(tableRepository, tableSessionRepository);
   const endTableSessionUseCase = new EndTableSessionUseCase(
@@ -22,6 +26,8 @@ export function registerTableHandlers(ipcMain: IpcMain, connection: DatabaseConn
     tableSessionRepository,
     accountingTransactionRepository
   );
+  const createTableTypeUseCase = new CreateTableTypeUseCase(tableTypeRepository);
+  const createTableUseCase = new CreateTableUseCase(tableRepository);
 
   function resolveStaffId(): string {
     const staffId = getCurrentStaffId() ?? staffRepository.findAllActive()[0]?.id;
@@ -80,4 +86,28 @@ export function registerTableHandlers(ipcMain: IpcMain, connection: DatabaseConn
       });
     }
   );
+
+  ipcMain.handle("table:listActive", () => {
+    return tableRepository.findAllActive();
+  });
+
+  ipcMain.handle("tableType:listActive", () => {
+    return tableTypeRepository.findAllActive();
+  });
+
+  ipcMain.handle("tableType:create", (_event, input: { name: string; hourlyRate: number }) => {
+    return createTableTypeUseCase.execute(input);
+  });
+
+  ipcMain.handle("tableType:updateRate", (_event, input: { id: string; hourlyRate: number }) => {
+    tableTypeRepository.updateRate(input.id, input.hourlyRate);
+  });
+
+  ipcMain.handle("table:create", (_event, input: { name: string; tableTypeId: string }) => {
+    return createTableUseCase.execute(input);
+  });
+
+  ipcMain.handle("table:deactivate", (_event, tableId: string) => {
+    tableRepository.deactivate(tableId);
+  });
 }

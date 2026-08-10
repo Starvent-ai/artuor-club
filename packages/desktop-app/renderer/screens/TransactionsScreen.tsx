@@ -9,9 +9,6 @@ import { formatJalaliDateTimeLabel, jalaliToIsoStartOfDay, isoToJalaliParts } fr
 import "./reports-screen.css";
 import "./transactions-screen.css";
 
-interface TransactionsScreenProps {
-  onClose: () => void;
-}
 
 const TYPE_LABELS: Record<string, string> = {
   table_income: "درآمد میز",
@@ -27,7 +24,7 @@ const PAYMENT_METHOD_LABELS: Record<string, string> = {
   ledger: "حساب دفتری",
 };
 
-export function TransactionsScreen({ onClose }: TransactionsScreenProps) {
+export function TransactionsScreen() {
   const [staffOptions, setStaffOptions] = useState<StaffOptionDto[]>([]);
   const [rangeStart, setRangeStart] = useState(() => {
     const date = new Date();
@@ -85,9 +82,6 @@ export function TransactionsScreen({ onClose }: TransactionsScreenProps) {
   return (
     <div className="reports-screen">
       <div className="reports-screen__header">
-        <button type="button" className="reports-screen__back-button" onClick={onClose}>
-          بازگشت
-        </button>
         <h1 className="reports-screen__title">تراکنش‌ها</h1>
       </div>
 

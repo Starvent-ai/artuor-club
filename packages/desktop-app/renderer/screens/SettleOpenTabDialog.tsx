@@ -27,9 +27,12 @@ export function SettleOpenTabDialog({
 
   async function settle(method: "cash" | "pos" | "card_to_card" | "ledger") {
     setIsSubmitting(true);
-    await window.arthurClub.settleOpenTab({ openTabId, method });
-    setIsSubmitting(false);
-    onSettled();
+    try {
+      await window.arthurClub.settleOpenTab({ openTabId, method });
+      onSettled();
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (

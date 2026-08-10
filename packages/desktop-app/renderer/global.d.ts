@@ -15,6 +15,10 @@ import type {
   EndPsSessionResultDto,
   StaffOptionDto,
   SearchAccountingTransactionsResultDto,
+  TableTypeDto,
+  TableDto,
+  DeviceDto,
+  DeviceControllerRateDto,
 } from "../preload/index";
 import type { HomeScreenTable, HomeScreenDevice } from "./screens/HomeScreen";
 
@@ -23,6 +27,27 @@ declare global {
     arthurClub: {
       getEntryScreenData: () => Promise<EntryScreenData>;
       setCurrentStaff: (staffId: string) => Promise<void>;
+      createStaff: (input: { fullName: string }) => Promise<string>;
+      deactivateStaff: (staffId: string) => Promise<void>;
+      listTableTypes: () => Promise<TableTypeDto[]>;
+      createTableType: (input: { name: string; hourlyRate: number }) => Promise<string>;
+      updateTableTypeRate: (input: { id: string; hourlyRate: number }) => Promise<void>;
+      createTable: (input: { name: string; tableTypeId: string }) => Promise<string>;
+      deactivateTable: (tableId: string) => Promise<void>;
+      listTables: () => Promise<TableDto[]>;
+      createDevice: (input: {
+        name: string;
+        deviceType: "ps4" | "ps5";
+        maxControllers?: number;
+      }) => Promise<string>;
+      deactivateDevice: (deviceId: string) => Promise<void>;
+      listDevices: () => Promise<DeviceDto[]>;
+      listDeviceControllerRates: (deviceType: "ps4" | "ps5") => Promise<DeviceControllerRateDto[]>;
+      setDeviceControllerRate: (input: {
+        deviceType: "ps4" | "ps5";
+        controllerCount: number;
+        hourlyRate: number;
+      }) => Promise<void>;
       getHomeScreenData: () => Promise<{ tables: HomeScreenTable[]; devices: HomeScreenDevice[] }>;
       toggleTableSession: (tableId: string) => Promise<void>;
       endTableSession: (input: {

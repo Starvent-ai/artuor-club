@@ -19,15 +19,18 @@ export function PasswordPromptDialog({
   async function submit() {
     setIsSubmitting(true);
     setErrorMessage(null);
-    const result = await window.arthurClub.verifyPassword(password);
-    setIsSubmitting(false);
+    try {
+      const result = await window.arthurClub.verifyPassword(password);
 
-    if (!result.isValid) {
-      setErrorMessage("رمز عبور اشتباه است");
-      return;
+      if (!result.isValid) {
+        setErrorMessage("رمز عبور اشتباه است");
+        return;
+      }
+
+      onUnlocked();
+    } finally {
+      setIsSubmitting(false);
     }
-
-    onUnlocked();
   }
 
   return (

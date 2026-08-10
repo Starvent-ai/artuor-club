@@ -55,4 +55,19 @@ export class SqlTableRepository implements TableRepository {
       id,
     ]);
   }
+
+  create(input: { id: string; name: string; tableTypeId: string; createdAt: string }): void {
+    this.connection.execute(
+      `INSERT INTO billiard_table (id, name, table_type_id, status, is_active, created_at, updated_at)
+       VALUES (?, ?, ?, 'free', 1, ?, ?)`,
+      [input.id, input.name, input.tableTypeId, input.createdAt, input.createdAt]
+    );
+  }
+
+  deactivate(id: string): void {
+    this.connection.execute("UPDATE billiard_table SET is_active = 0, updated_at = ? WHERE id = ?", [
+      new Date().toISOString(),
+      id,
+    ]);
+  }
 }

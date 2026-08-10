@@ -6,11 +6,8 @@ import { RecordLedgerPaymentDialog } from "./RecordLedgerPaymentDialog";
 import type { LedgerAccountSummaryDto } from "../../preload/index";
 import "./open-tabs-screen.css";
 
-interface LedgerScreenProps {
-  onClose: () => void;
-}
 
-export function LedgerScreen({ onClose }: LedgerScreenProps) {
+export function LedgerScreen() {
   const [searchTerm, setSearchTerm] = useState("");
   const [accounts, setAccounts] = useState<LedgerAccountSummaryDto[]>([]);
   const [accountPendingPayment, setAccountPendingPayment] = useState<LedgerAccountSummaryDto | null>(null);
@@ -36,9 +33,6 @@ export function LedgerScreen({ onClose }: LedgerScreenProps) {
   return (
     <div className="open-tabs-screen">
       <div className="open-tabs-screen__header">
-        <button type="button" className="open-tabs-screen__back-button" onClick={onClose}>
-          بازگشت
-        </button>
         <input
           type="text"
           className="open-tabs-screen__search"

@@ -7,4 +7,6 @@ export interface DeviceControllerRateRecord {
 
 export interface DeviceControllerRateRepository {
   findRate(deviceType: "ps4" | "ps5", controllerCount: number): DeviceControllerRateRecord | undefined;
+  findAllByDeviceType(deviceType: "ps4" | "ps5"): DeviceControllerRateRecord[];
+  upsert(record: DeviceControllerRateRecord): void;
 }
