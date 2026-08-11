@@ -1,3 +1,9 @@
+.unit-status-card-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3);
+}
+
 .unit-status-card {
   display: flex;
   flex-direction: column;
@@ -39,4 +45,45 @@
 .unit-status-card__badge--in-use {
   background: var(--color-accent-soft-bg);
   color: var(--color-accent-strong);
+}
+
+.unit-status-card__timer {
+  text-align: center;
+  font-size: var(--font-size-title);
+  font-weight: 600;
+  color: var(--color-accent-strong);
+  letter-spacing: 0.05em;
+  direction: ltr;
+}
+
+.unit-status-card__action {
+  width: 100%;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-small);
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-body);
+  font-weight: 600;
+  padding: var(--spacing-3) var(--spacing-4);
+  cursor: pointer;
+  transition: filter var(--transition-soft), border-color var(--transition-soft);
+}
+
+.unit-status-card__action--start {
+  background: var(--color-accent-gradient);
+  border-color: var(--color-accent-strong);
+  color: #1a1305;
+}
+
+.unit-status-card__action--start:hover {
+  filter: brightness(1.06);
+}
+
+.unit-status-card__action--end {
+  background: var(--color-danger);
+  border-color: var(--color-danger-strong);
+  color: var(--color-text-primary);
+}
+
+.unit-status-card__action--end:hover {
+  filter: brightness(1.08);
 }

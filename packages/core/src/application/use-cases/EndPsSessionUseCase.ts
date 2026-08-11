@@ -4,9 +4,12 @@ import type { DeviceControllerRateRepository } from "../../domain/ports/DeviceCo
 import type { PsSessionRepository } from "../../domain/ports/PsSessionRepository";
 import type { PsSessionSegmentRepository } from "../../domain/ports/PsSessionSegmentRepository";
 import type { AccountingTransactionRepository } from "../../domain/ports/AccountingTransactionRepository";
+import type { OpenTabRepository } from "../../domain/ports/OpenTabRepository";
+import type { OpenTabItemRepository } from "../../domain/ports/OpenTabItemRepository";
 import { PsSegmentBillingService } from "../../domain/services/PsSegmentBillingService";
 import { PsSessionBillingService } from "../../domain/services/PsSessionBillingService";
 import { Money } from "../../domain/value-objects/Money";
+import { AttachItemToOpenTabUseCase } from "./AttachItemToOpenTabUseCase";
 import {
   ActiveSegmentNotFoundError,
   PsSessionNotActiveError,
@@ -16,7 +19,7 @@ import { ControllerRateNotConfiguredError, DeviceNotFoundError } from "./StartPs
 export interface EndPsSessionInput {
   sessionId: string;
   staffId: string;
-  paymentMethod: "cash" | "pos" | "card_to_card" | "ledger";
+  paymentMethod?: "cash" | "pos" | "card_to_card" | "ledger";
   hasAttachedItems: boolean;
   now?: Date;
 }
@@ -28,13 +31,22 @@ export interface EndPsSessionResult {
 }
 
 export class EndPsSessionUseCase {
+  private readonly attachItemToOpenTabUseCase: AttachItemToOpenTabUseCase;
+
   constructor(
     private readonly deviceRepository: DeviceRepository,
     private readonly deviceControllerRateRepository: DeviceControllerRateRepository,
     private readonly psSessionRepository: PsSessionRepository,
     private readonly psSessionSegmentRepository: PsSessionSegmentRepository,
-    private readonly accountingTransactionRepository: AccountingTransactionRepository
-  ) {}
+    private readonly accountingTransactionRepository: AccountingTransactionRepository,
+    private readonly openTabRepository?: OpenTabRepository,
+    private readonly openTabItemRepository?: OpenTabItemRepository
+  ) {
+    this.attachItemToOpenTabUseCase =
+      this.openTabRepository && this.openTabItemRepository
+        ? new AttachItemToOpenTabUseCase(this.openTabRepository, this.openTabItemRepository)
+        : (undefined as unknown as AttachItemToOpenTabUseCase);
+  }
 
   execute(input: EndPsSessionInput): EndPsSessionResult {
     const session = this.psSessionRepository.findById(input.sessionId);
@@ -89,10 +101,6 @@ export class EndPsSessionUseCase {
       segmentAmounts,
       segmentBilledMinutes
     );
-    const transactionRecorded = PsSessionBillingService.shouldRecordAsTransaction(
-      sessionBillingResult,
-      input.hasAttachedItems
-    );
 
     this.psSessionRepository.closeSession(
       input.sessionId,
@@ -102,13 +110,34 @@ export class EndPsSessionUseCase {
 
     this.deviceRepository.updateStatus(session.deviceId, "free");
 
+    if (session.openTabId) {
+      this.attachItemToOpenTabUseCase.execute({
+        openTabId: session.openTabId,
+        sourceType: "ps_session",
+        sourceId: input.sessionId,
+        amount: sessionBillingResult.amount.toToman(),
+        now,
+      });
+
+      return {
+        totalBilledMinutes: sessionBillingResult.totalBilledMinutes,
+        amount: sessionBillingResult.amount.toToman(),
+        transactionRecorded: false,
+      };
+    }
+
+    const transactionRecorded = PsSessionBillingService.shouldRecordAsTransaction(
+      sessionBillingResult,
+      input.hasAttachedItems
+    );
+
     if (transactionRecorded) {
       this.accountingTransactionRepository.record({
         id: randomUUID(),
         type: "ps_income",
         sourceId: input.sessionId,
         amount: sessionBillingResult.amount.toToman(),
-        paymentMethod: input.paymentMethod,
+        paymentMethod: input.paymentMethod ?? "cash",
         description: null,
         staffId: input.staffId,
         occurredAt: now.toISOString(),

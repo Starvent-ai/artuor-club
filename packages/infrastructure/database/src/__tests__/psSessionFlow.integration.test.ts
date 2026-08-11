@@ -9,9 +9,13 @@ import { SqlDeviceControllerRateRepository } from "../repositories/SqlDeviceCont
 import { SqlPsSessionRepository } from "../repositories/SqlPsSessionRepository";
 import { SqlPsSessionSegmentRepository } from "../repositories/SqlPsSessionSegmentRepository";
 import { SqlAccountingTransactionRepository } from "../repositories/SqlAccountingTransactionRepository";
+import { SqlCustomerRepository } from "../repositories/SqlCustomerRepository";
+import { SqlOpenTabRepository } from "../repositories/SqlOpenTabRepository";
+import { SqlOpenTabItemRepository } from "../repositories/SqlOpenTabItemRepository";
 import { StartPsSessionUseCase, DeviceNotFreeError } from "../../../../core/src/application/use-cases/StartPsSessionUseCase";
 import { ChangePsSessionControllerCountUseCase } from "../../../../core/src/application/use-cases/ChangePsSessionControllerCountUseCase";
 import { EndPsSessionUseCase } from "../../../../core/src/application/use-cases/EndPsSessionUseCase";
+import { CreateOpenTabUseCase } from "../../../../core/src/application/use-cases/CreateOpenTabUseCase";
 
 function setupScenario() {
   const connection = new NodeSqliteTestConnection();
@@ -43,6 +47,9 @@ function setupScenario() {
   const sessionRepository = new SqlPsSessionRepository(connection);
   const segmentRepository = new SqlPsSessionSegmentRepository(connection);
   const transactionRepository = new SqlAccountingTransactionRepository(connection);
+  const customerRepository = new SqlCustomerRepository(connection);
+  const openTabRepository = new SqlOpenTabRepository(connection);
+  const openTabItemRepository = new SqlOpenTabItemRepository(connection);
 
   return {
     connection,
@@ -53,6 +60,9 @@ function setupScenario() {
     sessionRepository,
     segmentRepository,
     transactionRepository,
+    openTabRepository,
+    openTabItemRepository,
+    createOpenTabUseCase: new CreateOpenTabUseCase(customerRepository, openTabRepository),
     startUseCase: new StartPsSessionUseCase(
       deviceRepository,
       rateRepository,
@@ -71,6 +81,15 @@ function setupScenario() {
       sessionRepository,
       segmentRepository,
       transactionRepository
+    ),
+    endUseCaseWithOpenTabSupport: new EndPsSessionUseCase(
+      deviceRepository,
+      rateRepository,
+      sessionRepository,
+      segmentRepository,
+      transactionRepository,
+      openTabRepository,
+      openTabItemRepository
     ),
   };
 }
@@ -195,4 +214,42 @@ test("ending a very short session below the threshold without attached items is 
 
   assert.equal(result.amount, 0);
   assert.equal(result.transactionRecorded, false);
+});
+
+test("ending a PS session started against an open tab attaches it as an item instead of recording immediate income", () => {
+  const scenario = setupScenario();
+
+  const createResult = scenario.createOpenTabUseCase.execute({
+    customerName: "نگار حیدری",
+    staffId: scenario.staffId,
+  });
+  if (createResult.status !== "created") return;
+
+  const startTime = new Date("2026-01-01T10:00:00Z");
+  const sessionId = scenario.startUseCase.execute({
+    deviceId: scenario.deviceId,
+    staffId: scenario.staffId,
+    controllerCount: 1,
+    openTabId: createResult.openTabId,
+    now: startTime,
+  });
+
+  const endTime = new Date(startTime.getTime() + 60 * 60 * 1000);
+  const result = scenario.endUseCaseWithOpenTabSupport.execute({
+    sessionId,
+    staffId: scenario.staffId,
+    hasAttachedItems: false,
+    now: endTime,
+  });
+
+  assert.equal(result.transactionRecorded, false);
+  assert.equal(scenario.transactionRepository.search({}).length, 0);
+
+  const items = scenario.openTabItemRepository.findByOpenTabId(createResult.openTabId);
+  assert.equal(items.length, 1);
+  assert.equal(items[0].sourceType, "ps_session");
+  assert.equal(items[0].amount, result.amount);
+
+  const updatedTab = scenario.openTabRepository.findById(createResult.openTabId);
+  assert.equal(updatedTab?.totalAmount, result.amount);
 });

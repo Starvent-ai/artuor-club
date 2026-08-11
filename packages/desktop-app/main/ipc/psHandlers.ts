@@ -6,6 +6,7 @@ import { SqlDeviceControllerRateRepository } from "../../../infrastructure/datab
 import { SqlPsSessionRepository } from "../../../infrastructure/database/src/repositories/SqlPsSessionRepository";
 import { SqlPsSessionSegmentRepository } from "../../../infrastructure/database/src/repositories/SqlPsSessionSegmentRepository";
 import { SqlAccountingTransactionRepository } from "../../../infrastructure/database/src/repositories/SqlAccountingTransactionRepository";
+import { SqlOpenTabRepository } from "../../../infrastructure/database/src/repositories/SqlOpenTabRepository";
 import { SqlOpenTabItemRepository } from "../../../infrastructure/database/src/repositories/SqlOpenTabItemRepository";
 import { SqlAuditLogRepository } from "../../../infrastructure/database/src/repositories/SqlAuditLogRepository";
 import { StartPsSessionUseCase } from "../../../core/src/application/use-cases/StartPsSessionUseCase";
@@ -23,6 +24,7 @@ export function registerPsHandlers(ipcMain: IpcMain, connection: DatabaseConnect
   const sessionRepository = new SqlPsSessionRepository(connection);
   const segmentRepository = new SqlPsSessionSegmentRepository(connection);
   const accountingTransactionRepository = new SqlAccountingTransactionRepository(connection);
+  const openTabRepository = new SqlOpenTabRepository(connection);
   const openTabItemRepository = new SqlOpenTabItemRepository(connection);
   const auditLogRepository = new SqlAuditLogRepository(connection);
 
@@ -43,7 +45,9 @@ export function registerPsHandlers(ipcMain: IpcMain, connection: DatabaseConnect
     rateRepository,
     sessionRepository,
     segmentRepository,
-    accountingTransactionRepository
+    accountingTransactionRepository,
+    openTabRepository,
+    openTabItemRepository
   );
   const createDeviceUseCase = new CreateDeviceUseCase(deviceRepository);
   const setDeviceControllerRateUseCase = new SetDeviceControllerRateUseCase(rateRepository);
@@ -65,17 +69,19 @@ export function registerPsHandlers(ipcMain: IpcMain, connection: DatabaseConnect
     return {
       sessionId: session.id,
       controllerCount: activeSegment?.controllerCount ?? null,
+      openTabId: session.openTabId,
     };
   });
 
   ipcMain.handle(
     "ps:startSession",
-    (_event, input: { deviceId: string; controllerCount: number }) => {
+    (_event, input: { deviceId: string; controllerCount: number; openTabId?: string }) => {
       const staffId = resolveStaffId();
       return startPsSessionUseCase.execute({
         deviceId: input.deviceId,
         staffId,
         controllerCount: input.controllerCount,
+        openTabId: input.openTabId,
       });
     }
   );
@@ -91,7 +97,7 @@ export function registerPsHandlers(ipcMain: IpcMain, connection: DatabaseConnect
     "ps:endSession",
     (
       _event,
-      input: { deviceId: string; paymentMethod: "cash" | "pos" | "card_to_card" | "ledger" }
+      input: { deviceId: string; paymentMethod?: "cash" | "pos" | "card_to_card" | "ledger" }
     ) => {
       const staffId = resolveStaffId();
       const session = sessionRepository.findActiveByDeviceId(input.deviceId);

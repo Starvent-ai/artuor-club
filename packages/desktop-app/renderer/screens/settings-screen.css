@@ -219,3 +219,9 @@
   color: var(--color-text-tertiary);
   font-size: var(--font-size-caption);
 }
+
+.settings-screen__hint {
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-caption);
+  margin-bottom: var(--spacing-3);
+}

@@ -43,6 +43,12 @@ export function registerBuffetHandlers(ipcMain: IpcMain, connection: DatabaseCon
     return productRepository.findAllActive();
   });
 
+  ipcMain.handle("productCategory:listAll", () => {
+    return connection.queryAll<{ id: string; name: string }>(
+      "SELECT id, name FROM product_category ORDER BY name ASC"
+    );
+  });
+
   ipcMain.handle(
     "product:create",
     (

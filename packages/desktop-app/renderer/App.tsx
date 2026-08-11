@@ -150,10 +150,15 @@ export function App({ entryScreen, staffOptions, onStaffSelected }: AppProps) {
 
       {selectedTable && selectedTable.status === "in_use" && (
         <ManageTableSessionDialog
+          tableId={selectedTable.id}
           tableName={selectedTable.name}
-          onEnd={() => {
+          onEndRequiresPayment={() => {
             setSelectedTableId(null);
             setTableIdPendingPayment(selectedTable.id);
+          }}
+          onEndedWithoutPayment={() => {
+            setSelectedTableId(null);
+            refreshHomeScreenData();
           }}
           onCancel={() => setSelectedTableId(null)}
         />

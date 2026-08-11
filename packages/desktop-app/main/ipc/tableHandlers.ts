@@ -4,8 +4,10 @@ import { SqlStaffRepository } from "../../../infrastructure/database/src/reposit
 import { SqlTableRepository } from "../../../infrastructure/database/src/repositories/SqlTableRepository";
 import { SqlTableSessionRepository } from "../../../infrastructure/database/src/repositories/SqlTableSessionRepository";
 import { SqlDeviceRepository } from "../../../infrastructure/database/src/repositories/SqlDeviceRepository";
+import { SqlPsSessionRepository } from "../../../infrastructure/database/src/repositories/SqlPsSessionRepository";
 import { SqlAccountingTransactionRepository } from "../../../infrastructure/database/src/repositories/SqlAccountingTransactionRepository";
 import { SqlTableTypeRepository } from "../../../infrastructure/database/src/repositories/SqlTableTypeRepository";
+import { SqlOpenTabRepository } from "../../../infrastructure/database/src/repositories/SqlOpenTabRepository";
 import { SqlOpenTabItemRepository } from "../../../infrastructure/database/src/repositories/SqlOpenTabItemRepository";
 import { SqlAuditLogRepository } from "../../../infrastructure/database/src/repositories/SqlAuditLogRepository";
 import { StartTableSessionUseCase } from "../../../core/src/application/use-cases/StartTableSessionUseCase";
@@ -20,8 +22,10 @@ export function registerTableHandlers(ipcMain: IpcMain, connection: DatabaseConn
   const tableRepository = new SqlTableRepository(connection);
   const tableSessionRepository = new SqlTableSessionRepository(connection);
   const deviceRepository = new SqlDeviceRepository(connection);
+  const psSessionRepository = new SqlPsSessionRepository(connection);
   const accountingTransactionRepository = new SqlAccountingTransactionRepository(connection);
   const tableTypeRepository = new SqlTableTypeRepository(connection);
+  const openTabRepository = new SqlOpenTabRepository(connection);
   const openTabItemRepository = new SqlOpenTabItemRepository(connection);
   const auditLogRepository = new SqlAuditLogRepository(connection);
 
@@ -29,7 +33,9 @@ export function registerTableHandlers(ipcMain: IpcMain, connection: DatabaseConn
   const endTableSessionUseCase = new EndTableSessionUseCase(
     tableRepository,
     tableSessionRepository,
-    accountingTransactionRepository
+    accountingTransactionRepository,
+    openTabRepository,
+    openTabItemRepository
   );
   const createTableTypeUseCase = new CreateTableTypeUseCase(tableTypeRepository);
   const createTableUseCase = new CreateTableUseCase(tableRepository);
@@ -48,34 +54,58 @@ export function registerTableHandlers(ipcMain: IpcMain, connection: DatabaseConn
         id: table.id,
         name: table.name,
         status: table.status,
+        activeSessionStartTime:
+          table.status === "in_use"
+            ? tableSessionRepository.findActiveByTableId(table.id)?.startTime ?? null
+            : null,
       })),
       devices: deviceRepository.findAllActive().map((device) => ({
         id: device.id,
         name: device.name,
         deviceType: device.deviceType,
         status: device.status,
+        activeSessionStartTime:
+          device.status === "in_use"
+            ? psSessionRepository.findActiveByDeviceId(device.id)?.startTime ?? null
+            : null,
       })),
     };
   });
 
-  ipcMain.handle("table:toggleSession", (_event, tableId: string) => {
-    const staffId = resolveStaffId();
-    const table = tableRepository.findById(tableId);
-    if (!table) {
-      throw new Error("TABLE_NOT_FOUND");
-    }
-    if (table.status !== "free") {
-      throw new Error("TABLE_NOT_FREE");
-    }
+  ipcMain.handle(
+    "table:toggleSession",
+    (_event, input: { tableId: string; openTabId?: string } | string) => {
+      const normalizedInput = typeof input === "string" ? { tableId: input } : input;
+      const staffId = resolveStaffId();
+      const table = tableRepository.findById(normalizedInput.tableId);
+      if (!table) {
+        throw new Error("TABLE_NOT_FOUND");
+      }
+      if (table.status !== "free") {
+        throw new Error("TABLE_NOT_FREE");
+      }
 
-    startTableSessionUseCase.execute({ tableId, staffId });
+      startTableSessionUseCase.execute({
+        tableId: normalizedInput.tableId,
+        staffId,
+        openTabId: normalizedInput.openTabId,
+      });
+    }
+  );
+
+  ipcMain.handle("table:getActiveSession", (_event, tableId: string) => {
+    const session = tableSessionRepository.findActiveByTableId(tableId);
+    if (!session) {
+      return null;
+    }
+    return { sessionId: session.id, openTabId: session.openTabId };
   });
 
   ipcMain.handle(
     "table:endSession",
     (
       _event,
-      input: { tableId: string; paymentMethod: "cash" | "pos" | "card_to_card" | "ledger" }
+      input: { tableId: string; paymentMethod?: "cash" | "pos" | "card_to_card" | "ledger" }
     ) => {
       const staffId = resolveStaffId();
       const activeSession = tableSessionRepository.findActiveByTableId(input.tableId);

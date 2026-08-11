@@ -7,6 +7,8 @@ import type {
   TableDto,
   DeviceDto,
   DeviceControllerRateDto,
+  ProductDto,
+  ProductCategoryDto,
 } from "../../preload/index";
 import { formatJalaliDateTimeLabel } from "../utils/formatJalaliDateTime";
 
@@ -25,6 +27,10 @@ export function SettingsScreen() {
   const [backupMessage, setBackupMessage] = useState<string | null>(null);
   const [isBackupBusy, setIsBackupBusy] = useState(false);
 
+  const [tableTypeRateDrafts, setTableTypeRateDrafts] = useState<Record<string, string>>({});
+  const [ps4RateDrafts, setPs4RateDrafts] = useState<Record<number, string>>({});
+  const [ps5RateDrafts, setPs5RateDrafts] = useState<Record<number, string>>({});
+
   const [staffList, setStaffList] = useState<StaffOptionDto[]>([]);
   const [newStaffName, setNewStaffName] = useState("");
 
@@ -41,6 +47,15 @@ export function SettingsScreen() {
   const [ps4Rates, setPs4Rates] = useState<DeviceControllerRateDto[]>([]);
   const [ps5Rates, setPs5Rates] = useState<DeviceControllerRateDto[]>([]);
 
+  const [products, setProducts] = useState<ProductDto[]>([]);
+  const [productCategories, setProductCategories] = useState<ProductCategoryDto[]>([]);
+  const [newProductName, setNewProductName] = useState("");
+  const [newProductCategoryName, setNewProductCategoryName] = useState("");
+  const [newProductPurchasePrice, setNewProductPurchasePrice] = useState("");
+  const [newProductSalePrice, setNewProductSalePrice] = useState("");
+  const [newProductStock, setNewProductStock] = useState("");
+  const [newProductLowStockThreshold, setNewProductLowStockThreshold] = useState("");
+
   function refreshStaffList() {
     window.arthurClub.listAllActiveStaff().then(setStaffList);
   }
@@ -56,10 +71,16 @@ export function SettingsScreen() {
     window.arthurClub.listDeviceControllerRates("ps5").then(setPs5Rates);
   }
 
+  function refreshBuffetSetup() {
+    window.arthurClub.listProducts().then(setProducts);
+    window.arthurClub.listProductCategories().then(setProductCategories);
+  }
+
   useEffect(() => {
     refreshStaffList();
     refreshTableSetup();
     refreshDeviceSetup();
+    refreshBuffetSetup();
   }, []);
 
   async function addStaff() {
@@ -89,6 +110,11 @@ export function SettingsScreen() {
 
   async function updateTableTypeRate(id: string, hourlyRate: number) {
     await window.arthurClub.updateTableTypeRate({ id, hourlyRate });
+    setTableTypeRateDrafts((drafts) => {
+      const next = { ...drafts };
+      delete next[id];
+      return next;
+    });
     refreshTableSetup();
   }
 
@@ -120,8 +146,56 @@ export function SettingsScreen() {
     refreshDeviceSetup();
   }
 
+  async function addProduct() {
+    const purchasePrice = Number(newProductPurchasePrice);
+    const salePrice = Number(newProductSalePrice);
+    const initialStock = Number(newProductStock);
+    const lowStockThreshold = Number(newProductLowStockThreshold);
+
+    if (
+      newProductName.trim().length === 0 ||
+      newProductCategoryName.trim().length === 0 ||
+      !Number.isFinite(purchasePrice) ||
+      !Number.isFinite(salePrice) ||
+      !Number.isFinite(initialStock) ||
+      !Number.isFinite(lowStockThreshold)
+    ) {
+      return;
+    }
+
+    await window.arthurClub.createProduct({
+      name: newProductName.trim(),
+      categoryName: newProductCategoryName.trim(),
+      purchasePrice,
+      salePrice,
+      initialStock,
+      lowStockThreshold,
+    });
+
+    setNewProductName("");
+    setNewProductCategoryName("");
+    setNewProductPurchasePrice("");
+    setNewProductSalePrice("");
+    setNewProductStock("");
+    setNewProductLowStockThreshold("");
+    refreshBuffetSetup();
+  }
+
   async function updateControllerRate(deviceType: "ps4" | "ps5", controllerCount: number, hourlyRate: number) {
     await window.arthurClub.setDeviceControllerRate({ deviceType, controllerCount, hourlyRate });
+    if (deviceType === "ps4") {
+      setPs4RateDrafts((drafts) => {
+        const next = { ...drafts };
+        delete next[controllerCount];
+        return next;
+      });
+    } else {
+      setPs5RateDrafts((drafts) => {
+        const next = { ...drafts };
+        delete next[controllerCount];
+        return next;
+      });
+    }
     refreshDeviceSetup();
   }
 
@@ -346,7 +420,10 @@ export function SettingsScreen() {
                   type="text"
                   inputMode="numeric"
                   className="settings-screen__rate-input"
-                  defaultValue={type.hourlyRate}
+                  value={tableTypeRateDrafts[type.id] ?? String(type.hourlyRate)}
+                  onChange={(event) =>
+                    setTableTypeRateDrafts((drafts) => ({ ...drafts, [type.id]: event.target.value }))
+                  }
                   onBlur={(event) => {
                     const value = Number(event.target.value);
                     if (Number.isFinite(value) && value > 0) {
@@ -474,7 +551,13 @@ export function SettingsScreen() {
                   type="text"
                   inputMode="numeric"
                   className="settings-screen__rate-input"
-                  defaultValue={ps4Rates.find((rate) => rate.controllerCount === count)?.hourlyRate ?? 0}
+                  value={
+                    ps4RateDrafts[count] ??
+                    String(ps4Rates.find((rate) => rate.controllerCount === count)?.hourlyRate ?? 0)
+                  }
+                  onChange={(event) =>
+                    setPs4RateDrafts((drafts) => ({ ...drafts, [count]: event.target.value }))
+                  }
                   onBlur={(event) => {
                     const value = Number(event.target.value);
                     if (Number.isFinite(value) && value >= 0) {
@@ -495,7 +578,13 @@ export function SettingsScreen() {
                   type="text"
                   inputMode="numeric"
                   className="settings-screen__rate-input"
-                  defaultValue={ps5Rates.find((rate) => rate.controllerCount === count)?.hourlyRate ?? 0}
+                  value={
+                    ps5RateDrafts[count] ??
+                    String(ps5Rates.find((rate) => rate.controllerCount === count)?.hourlyRate ?? 0)
+                  }
+                  onChange={(event) =>
+                    setPs5RateDrafts((drafts) => ({ ...drafts, [count]: event.target.value }))
+                  }
                   onBlur={(event) => {
                     const value = Number(event.target.value);
                     if (Number.isFinite(value) && value >= 0) {
@@ -505,6 +594,83 @@ export function SettingsScreen() {
                 />
               </div>
             ))}
+          </div>
+        </section>
+
+        <section className="settings-screen__section">
+          <h2 className="settings-screen__section-title">مدیریت بوفه — دسته‌بندی‌ها و محصولات</h2>
+
+          <div className="settings-screen__list">
+            {products.map((product) => (
+              <div key={product.id} className="settings-screen__list-row">
+                <span>{product.name}</span>
+                <span>
+                  {productCategories.find((category) => category.id === product.categoryId)?.name ??
+                    "—"}
+                </span>
+                <span>{product.salePrice.toLocaleString("fa-IR")} تومان</span>
+                <span>موجودی: {product.stockQuantity.toLocaleString("fa-IR")}</span>
+              </div>
+            ))}
+            {products.length === 0 && (
+              <p className="settings-screen__backup-empty">محصولی ثبت نشده است</p>
+            )}
+          </div>
+
+          {productCategories.length > 0 && (
+            <p className="settings-screen__hint">
+              دسته‌بندی‌های موجود: {productCategories.map((category) => category.name).join("، ")}
+            </p>
+          )}
+
+          <div className="settings-screen__inline-form">
+            <input
+              className="settings-screen__input"
+              placeholder="نام محصول"
+              value={newProductName}
+              onChange={(event) => setNewProductName(event.target.value)}
+            />
+            <input
+              className="settings-screen__input"
+              placeholder="دسته‌بندی (مثلاً نوشیدنی)"
+              value={newProductCategoryName}
+              onChange={(event) => setNewProductCategoryName(event.target.value)}
+            />
+            <input
+              type="text"
+              inputMode="numeric"
+              className="settings-screen__input"
+              placeholder="قیمت خرید"
+              value={newProductPurchasePrice}
+              onChange={(event) => setNewProductPurchasePrice(event.target.value)}
+            />
+            <input
+              type="text"
+              inputMode="numeric"
+              className="settings-screen__input"
+              placeholder="قیمت فروش"
+              value={newProductSalePrice}
+              onChange={(event) => setNewProductSalePrice(event.target.value)}
+            />
+            <input
+              type="text"
+              inputMode="numeric"
+              className="settings-screen__input"
+              placeholder="موجودی اولیه"
+              value={newProductStock}
+              onChange={(event) => setNewProductStock(event.target.value)}
+            />
+            <input
+              type="text"
+              inputMode="numeric"
+              className="settings-screen__input"
+              placeholder="آستانه هشدار کمبود"
+              value={newProductLowStockThreshold}
+              onChange={(event) => setNewProductLowStockThreshold(event.target.value)}
+            />
+            <button type="button" className="settings-screen__save-button" onClick={addProduct}>
+              افزودن محصول
+            </button>
           </div>
         </section>
       </div>

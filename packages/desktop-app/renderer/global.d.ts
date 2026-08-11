@@ -4,6 +4,7 @@ import type {
   LedgerAccountSummaryDto,
   CreateOpenTabResultDto,
   ProductDto,
+  ProductCategoryDto,
   CreateBuffetOrderResultDto,
   SecurityStatusDto,
   VerifyPasswordResultDto,
@@ -12,6 +13,7 @@ import type {
   CreateBackupResultDto,
   RestoreBackupResultDto,
   ActivePsSessionDto,
+  ActiveTableSessionDto,
   EndPsSessionResultDto,
   StaffOptionDto,
   SearchAccountingTransactionsResultDto,
@@ -49,10 +51,11 @@ declare global {
         hourlyRate: number;
       }) => Promise<void>;
       getHomeScreenData: () => Promise<{ tables: HomeScreenTable[]; devices: HomeScreenDevice[] }>;
-      toggleTableSession: (tableId: string) => Promise<void>;
+      toggleTableSession: (input: { tableId: string; openTabId?: string }) => Promise<void>;
+      getActiveTableSession: (tableId: string) => Promise<ActiveTableSessionDto | null>;
       endTableSession: (input: {
         tableId: string;
-        paymentMethod: "cash" | "pos" | "card_to_card" | "ledger";
+        paymentMethod?: "cash" | "pos" | "card_to_card" | "ledger";
       }) => Promise<void>;
       listOpenTabs: (namePrefix?: string) => Promise<OpenTabSummaryDto[]>;
       createOpenTab: (input: {
@@ -71,6 +74,7 @@ declare global {
         method: "cash" | "pos" | "card_to_card";
       }) => Promise<void>;
       listProducts: () => Promise<ProductDto[]>;
+      listProductCategories: () => Promise<ProductCategoryDto[]>;
       createProduct: (input: {
         name: string;
         categoryName: string;
@@ -102,14 +106,18 @@ declare global {
       createManualBackup: () => Promise<CreateBackupResultDto>;
       restoreBackup: () => Promise<RestoreBackupResultDto>;
       getActivePsSession: (deviceId: string) => Promise<ActivePsSessionDto | null>;
-      startPsSession: (input: { deviceId: string; controllerCount: number }) => Promise<string>;
+      startPsSession: (input: {
+        deviceId: string;
+        controllerCount: number;
+        openTabId?: string;
+      }) => Promise<string>;
       changePsSessionControllerCount: (input: {
         sessionId: string;
         newControllerCount: number;
       }) => Promise<void>;
       endPsSession: (input: {
         deviceId: string;
-        paymentMethod: "cash" | "pos" | "card_to_card" | "ledger";
+        paymentMethod?: "cash" | "pos" | "card_to_card" | "ledger";
       }) => Promise<EndPsSessionResultDto>;
       searchTransactions: (input: {
         rangeStart?: string;

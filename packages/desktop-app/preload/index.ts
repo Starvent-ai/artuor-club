@@ -38,6 +38,11 @@ export interface ProductDto {
   isActive: boolean;
 }
 
+export interface ProductCategoryDto {
+  id: string;
+  name: string;
+}
+
 export interface CreateBuffetOrderResultDto {
   buffetOrderId: string;
   totalAmount: number;
@@ -146,6 +151,12 @@ export interface SearchAccountingTransactionsResultDto {
 export interface ActivePsSessionDto {
   sessionId: string;
   controllerCount: number | null;
+  openTabId: string | null;
+}
+
+export interface ActiveTableSessionDto {
+  sessionId: string;
+  openTabId: string | null;
 }
 
 export interface EndPsSessionResultDto {
@@ -183,10 +194,13 @@ contextBridge.exposeInMainWorld("arthurClub", {
     hourlyRate: number;
   }): Promise<void> => ipcRenderer.invoke("deviceControllerRate:set", input),
   getHomeScreenData: () => ipcRenderer.invoke("home:getScreenData"),
-  toggleTableSession: (tableId: string) => ipcRenderer.invoke("table:toggleSession", tableId),
+  toggleTableSession: (input: { tableId: string; openTabId?: string }) =>
+    ipcRenderer.invoke("table:toggleSession", input),
+  getActiveTableSession: (tableId: string): Promise<ActiveTableSessionDto | null> =>
+    ipcRenderer.invoke("table:getActiveSession", tableId),
   endTableSession: (input: {
     tableId: string;
-    paymentMethod: "cash" | "pos" | "card_to_card" | "ledger";
+    paymentMethod?: "cash" | "pos" | "card_to_card" | "ledger";
   }) => ipcRenderer.invoke("table:endSession", input),
   listOpenTabs: (namePrefix?: string): Promise<OpenTabSummaryDto[]> =>
     ipcRenderer.invoke("openTab:list", namePrefix),
@@ -207,6 +221,8 @@ contextBridge.exposeInMainWorld("arthurClub", {
     method: "cash" | "pos" | "card_to_card";
   }): Promise<void> => ipcRenderer.invoke("ledger:recordPayment", input),
   listProducts: (): Promise<ProductDto[]> => ipcRenderer.invoke("product:listActive"),
+  listProductCategories: (): Promise<ProductCategoryDto[]> =>
+    ipcRenderer.invoke("productCategory:listAll"),
   createProduct: (input: {
     name: string;
     categoryName: string;
@@ -243,15 +259,18 @@ contextBridge.exposeInMainWorld("arthurClub", {
   restoreBackup: (): Promise<RestoreBackupResultDto> => ipcRenderer.invoke("backup:restore"),
   getActivePsSession: (deviceId: string): Promise<ActivePsSessionDto | null> =>
     ipcRenderer.invoke("ps:getActiveSession", deviceId),
-  startPsSession: (input: { deviceId: string; controllerCount: number }): Promise<string> =>
-    ipcRenderer.invoke("ps:startSession", input),
+  startPsSession: (input: {
+    deviceId: string;
+    controllerCount: number;
+    openTabId?: string;
+  }): Promise<string> => ipcRenderer.invoke("ps:startSession", input),
   changePsSessionControllerCount: (input: {
     sessionId: string;
     newControllerCount: number;
   }): Promise<void> => ipcRenderer.invoke("ps:changeControllerCount", input),
   endPsSession: (input: {
     deviceId: string;
-    paymentMethod: "cash" | "pos" | "card_to_card" | "ledger";
+    paymentMethod?: "cash" | "pos" | "card_to_card" | "ledger";
   }): Promise<EndPsSessionResultDto> => ipcRenderer.invoke("ps:endSession", input),
   searchTransactions: (input: {
     rangeStart?: string;

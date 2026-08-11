@@ -7,11 +7,15 @@ import { MigrationRunner } from "../MigrationRunner";
 import { SqlTableRepository } from "../repositories/SqlTableRepository";
 import { SqlTableSessionRepository } from "../repositories/SqlTableSessionRepository";
 import { SqlAccountingTransactionRepository } from "../repositories/SqlAccountingTransactionRepository";
+import { SqlCustomerRepository } from "../repositories/SqlCustomerRepository";
+import { SqlOpenTabRepository } from "../repositories/SqlOpenTabRepository";
+import { SqlOpenTabItemRepository } from "../repositories/SqlOpenTabItemRepository";
 import {
   StartTableSessionUseCase,
   TableNotFreeError,
 } from "../../../../core/src/application/use-cases/StartTableSessionUseCase";
 import { EndTableSessionUseCase } from "../../../../core/src/application/use-cases/EndTableSessionUseCase";
+import { CreateOpenTabUseCase } from "../../../../core/src/application/use-cases/CreateOpenTabUseCase";
 
 function setupScenario() {
   const connection = new NodeSqliteTestConnection();
@@ -38,6 +42,9 @@ function setupScenario() {
   const tableRepository = new SqlTableRepository(connection);
   const sessionRepository = new SqlTableSessionRepository(connection);
   const transactionRepository = new SqlAccountingTransactionRepository(connection);
+  const customerRepository = new SqlCustomerRepository(connection);
+  const openTabRepository = new SqlOpenTabRepository(connection);
+  const openTabItemRepository = new SqlOpenTabItemRepository(connection);
 
   return {
     connection,
@@ -46,8 +53,18 @@ function setupScenario() {
     tableRepository,
     sessionRepository,
     transactionRepository,
+    openTabRepository,
+    openTabItemRepository,
+    createOpenTabUseCase: new CreateOpenTabUseCase(customerRepository, openTabRepository),
     startUseCase: new StartTableSessionUseCase(tableRepository, sessionRepository),
     endUseCase: new EndTableSessionUseCase(tableRepository, sessionRepository, transactionRepository),
+    endUseCaseWithOpenTabSupport: new EndTableSessionUseCase(
+      tableRepository,
+      sessionRepository,
+      transactionRepository,
+      openTabRepository,
+      openTabItemRepository
+    ),
   };
 }
 
@@ -175,4 +192,40 @@ test("after ending a session the same table can be started again", () => {
 
   assert.notEqual(secondSessionId, sessionId);
   assert.equal(scenario.tableRepository.findById(scenario.tableId)?.status, "in_use");
+});
+
+test("ending a session started against an open tab attaches it as an item instead of recording immediate income", () => {
+  const scenario = setupScenario();
+
+  const createResult = scenario.createOpenTabUseCase.execute({
+    customerName: "بابک رستمی",
+    staffId: scenario.staffId,
+  });
+  if (createResult.status !== "created") return;
+
+  const startTime = new Date();
+  const sessionId = scenario.startUseCase.execute({
+    tableId: scenario.tableId,
+    staffId: scenario.staffId,
+    openTabId: createResult.openTabId,
+    now: startTime,
+  });
+
+  const result = scenario.endUseCaseWithOpenTabSupport.execute({
+    sessionId,
+    staffId: scenario.staffId,
+    hasAttachedItems: false,
+    now: new Date(startTime.getTime() + 20 * 60 * 1000),
+  });
+
+  assert.equal(result.transactionRecorded, false);
+  assert.equal(scenario.transactionRepository.search({}).length, 0);
+
+  const items = scenario.openTabItemRepository.findByOpenTabId(createResult.openTabId);
+  assert.equal(items.length, 1);
+  assert.equal(items[0].sourceType, "table_session");
+  assert.equal(items[0].amount, result.amount);
+
+  const updatedTab = scenario.openTabRepository.findById(createResult.openTabId);
+  assert.equal(updatedTab?.totalAmount, result.amount);
 });

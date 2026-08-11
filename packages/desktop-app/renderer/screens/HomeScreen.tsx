@@ -5,6 +5,7 @@ export interface HomeScreenTable {
   id: string;
   name: string;
   status: "free" | "in_use";
+  activeSessionStartTime: string | null;
 }
 
 export interface HomeScreenDevice {
@@ -12,6 +13,7 @@ export interface HomeScreenDevice {
   name: string;
   deviceType: "ps4" | "ps5";
   status: "free" | "in_use";
+  activeSessionStartTime: string | null;
 }
 
 interface HomeScreenProps {
@@ -37,7 +39,8 @@ export function HomeScreen({ tables, devices, onTableClick, onDeviceClick }: Hom
               name={table.name}
               status={table.status}
               imageUrl={TABLE_PLACEHOLDER}
-              onClick={() => onTableClick(table.id)}
+              activeSessionStartTime={table.activeSessionStartTime}
+              onActionClick={() => onTableClick(table.id)}
             />
           ))}
           {tables.length === 0 && (
@@ -57,7 +60,8 @@ export function HomeScreen({ tables, devices, onTableClick, onDeviceClick }: Hom
                 name={device.name}
                 status={device.status}
                 imageUrl={PS4_PLACEHOLDER}
-                onClick={() => onDeviceClick(device.id)}
+                activeSessionStartTime={device.activeSessionStartTime}
+                onActionClick={() => onDeviceClick(device.id)}
               />
             ))}
           {devices.filter((device) => device.deviceType === "ps4").length === 0 && (
@@ -77,7 +81,8 @@ export function HomeScreen({ tables, devices, onTableClick, onDeviceClick }: Hom
                 name={device.name}
                 status={device.status}
                 imageUrl={PS5_PLACEHOLDER}
-                onClick={() => onDeviceClick(device.id)}
+                activeSessionStartTime={device.activeSessionStartTime}
+                onActionClick={() => onDeviceClick(device.id)}
               />
             ))}
           {devices.filter((device) => device.deviceType === "ps5").length === 0 && (

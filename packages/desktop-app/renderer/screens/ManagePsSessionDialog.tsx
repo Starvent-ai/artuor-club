@@ -21,6 +21,7 @@ export function ManagePsSessionDialog({
 }: ManagePsSessionDialogProps) {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [controllerCount, setControllerCount] = useState<number | null>(null);
+  const [openTabId, setOpenTabId] = useState<string | null>(null);
   const [isBusy, setIsBusy] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isChoosingPaymentMethod, setIsChoosingPaymentMethod] = useState(false);
@@ -29,6 +30,7 @@ export function ManagePsSessionDialog({
     window.arthurClub.getActivePsSession(deviceId).then((session) => {
       setSessionId(session?.sessionId ?? null);
       setControllerCount(session?.controllerCount ?? null);
+      setOpenTabId(session?.openTabId ?? null);
     });
   }, [deviceId]);
 
@@ -61,6 +63,19 @@ export function ManagePsSessionDialog({
     } catch {
       setErrorMessage("پایان جلسه با خطا مواجه شد");
       setIsChoosingPaymentMethod(false);
+    } finally {
+      setIsBusy(false);
+    }
+  }
+
+  async function endSessionAttachedToTab() {
+    setIsBusy(true);
+    setErrorMessage(null);
+    try {
+      await window.arthurClub.endPsSession({ deviceId });
+      onEnded();
+    } catch {
+      setErrorMessage("پایان جلسه با خطا مواجه شد");
     } finally {
       setIsBusy(false);
     }
@@ -109,10 +124,10 @@ export function ManagePsSessionDialog({
           <button
             type="button"
             className="create-open-tab-dialog__primary"
-            onClick={() => setIsChoosingPaymentMethod(true)}
+            onClick={() => (openTabId ? endSessionAttachedToTab() : setIsChoosingPaymentMethod(true))}
             disabled={isBusy || sessionId === null}
           >
-            پایان جلسه
+            {openTabId ? "پایان جلسه و افزودن به حساب مشتری" : "پایان جلسه"}
           </button>
         </div>
       </div>
